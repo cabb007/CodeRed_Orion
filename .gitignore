@@ -1,0 +1,11 @@
+.DS_Store
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+
+.env
+.env.*
+!.env.example
+server/data/
+node_modules/
