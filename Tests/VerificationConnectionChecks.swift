@@ -41,13 +41,18 @@ struct VerificationConnectionChecks {
             return (200, Data(#"{"service":"ecogotchi","status":"ok","reviewsRemaining":30}"#.utf8))
         }
         let status = try await connection.testConnection(session: session)
-        precondition(status.reviewsRemaining == 30)
+        precondition(status.reviewsRemaining == 30, "Existing servers remain compatible")
+        StubConnection.handler = { _ in
+            (200, Data(#"{"service":"recycli","status":"ok","reviewsRemaining":30}"#.utf8))
+        }
+        let renamedStatus = try await connection.testConnection(session: session)
+        precondition(renamedStatus.service == "recycli" && renamedStatus.reviewsRemaining == 30)
         for (code, body, message) in [
             (401, "{}", "token didn’t match"),
             (404, "{}", "Restart"),
-            (200, "<html>Another service</html>", "valid EcoGotchi"),
-            (200, #"{"service":"other","status":"ok","reviewsRemaining":30}"#, "valid EcoGotchi"),
-            (200, #"{"service":"ecogotchi","status":"ok","reviewsRemaining":-1}"#, "valid EcoGotchi")
+            (200, "<html>Another service</html>", "valid Recycli"),
+            (200, #"{"service":"other","status":"ok","reviewsRemaining":30}"#, "valid Recycli"),
+            (200, #"{"service":"ecogotchi","status":"ok","reviewsRemaining":-1}"#, "valid Recycli")
         ] {
             StubConnection.handler = { _ in (code, Data(body.utf8)) }
             do {

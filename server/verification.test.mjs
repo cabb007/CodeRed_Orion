@@ -107,7 +107,7 @@ test('Gemini request uses structured image input; reads REST model_output', asyn
     assert.deepEqual(body.generation_config, { max_output_tokens: 2048, thinking_level: 'low', thinking_summaries: 'none' });
     assert.equal(body.response_format.mime_type, 'application/json');
     assert.ok(body.response_format.schema.required.includes('acceptanceEvidence'));
-    const directConfig = JSON.parse(readFileSync(new URL('../EcoGotchi/Resources/GeminiReview.json', import.meta.url), 'utf8'));
+    const directConfig = JSON.parse(readFileSync(new URL('../Recycli/Resources/GeminiReview.json', import.meta.url), 'utf8'));
     assert.deepEqual(body.response_format.schema, directConfig.responseSchema);
     assert.equal(body.system_instruction, directConfig.systemInstruction);
     assert.ok(!body.response_format.schema.required.includes('disposalVisible'));
@@ -152,11 +152,11 @@ test('connection check verifies authentication without calling Gemini or spendin
   const api = await start(t, { dailyReviewLimit: 1, now: () => baseTime, verify: async () => { calls++; return good; } });
   assert.equal((await api.checkConnection({ Authorization: 'Bearer wrong' })).status, 401);
   for (let i = 0; i < 3; i++) {
-    assert.deepEqual(await api.checkConnection(), { status: 200, body: { service: 'ecogotchi', status: 'ok', reviewsRemaining: 1 } });
+    assert.deepEqual(await api.checkConnection(), { status: 200, body: { service: 'recycli', status: 'ok', reviewsRemaining: 1 } });
   }
   assert.equal(calls, 0);
   assert.equal((await api.post(submission())).status, 200);
-  assert.deepEqual((await api.checkConnection()).body, { service: 'ecogotchi', status: 'ok', reviewsRemaining: 0 });
+  assert.deepEqual((await api.checkConnection()).body, { service: 'recycli', status: 'ok', reviewsRemaining: 0 });
   assert.equal(calls, 1);
 });
 test('HTTP auth rejects before calling Gemini', async t => {
@@ -234,7 +234,7 @@ test('daily reward limit applies across distinct photos', async t => {
   assert.equal((await api.post(submission(now))).status, 429);
 });
 test('duplicate evidence survives server restart', async t => {
-  const directory = mkdtempSync(join(tmpdir(), 'ecogotchi-verify-'));
+  const directory = mkdtempSync(join(tmpdir(), 'recycli-verify-'));
   const databasePath = join(directory, 'test.sqlite');
   const first = await start(t, { databasePath, now: () => baseTime });
   const body = submission(); assert.equal((await first.post(body)).status, 200);
@@ -280,7 +280,7 @@ test('concurrent requests cannot exceed the final daily AI slot', async t => {
 });
 
 test('daily AI cap survives restart and a zero cap disables new AI calls', async t => {
-  const directory = mkdtempSync(join(tmpdir(), 'ecogotchi-budget-'));
+  const directory = mkdtempSync(join(tmpdir(), 'recycli-budget-'));
   const databasePath = join(directory, 'test.sqlite');
   const first = await start(t, { databasePath, dailyReviewLimit: 1, now: () => baseTime });
   assert.equal((await first.post(submission())).status, 200);

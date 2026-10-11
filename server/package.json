@@ -1,5 +1,5 @@
 {
-  "name": "ecogotchi-verification",
+  "name": "recycli-verification",
   "private": true,
   "type": "module",
   "engines": {"node": ">=22.13"},

@@ -129,7 +129,7 @@ struct GeminiDirectConnection {
             if Task.isCancelled { throw CancellationError() }
             switch (error as? URLError)?.code {
             case .notConnectedToInternet, .dataNotAllowed:
-                throw VerificationError.message("Connect your iPhone to Wi-Fi or enable cellular data for EcoGotchi. No Mac connection is needed.")
+                throw VerificationError.message("Connect your iPhone to Wi-Fi or enable cellular data for Recycli. No Mac connection is needed.")
             case .timedOut:
                 throw VerificationError.message("Gemini took too long to respond. Retry the same photos. No leaves were added.")
             default:

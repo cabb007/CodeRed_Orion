@@ -266,7 +266,7 @@ struct RecyclingView: View {
                 }
                 Text("Return to your habitat while Gemini reviews your bin and item. Approved leaves will appear automatically, and you can tap the review banner for the result.")
                     .font(.subheadline)
-                Text("Keep EcoGotchi open while you play. Leaving the app may pause the review; closing the app completely discards unfinished scans.")
+                Text("Keep Recycli open while you play. Leaving the app may pause the review; closing the app completely discards unfinished scans.")
                     .font(.caption).foregroundStyle(.secondary)
             } else {
                 Text(review.message ?? "The review couldn’t finish. No leaves were added.")

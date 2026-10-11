@@ -36,7 +36,7 @@ struct VerificationSettingsView: View {
                         }.pickerStyle(.segmented).disabled(testing)
                         Text(provider == .direct
                              ? "Connect straight to Gemini over Wi-Fi or cellular. Your Mac can be off."
-                             : "Connect through your existing EcoGotchi review server. A hosted HTTPS server also works away from your Mac.")
+                             : "Connect through your existing Recycli review server. A hosted HTTPS server also works away from your Mac.")
                             .font(.subheadline)
                     } header: { Text("Actual scans") }
                     if provider == .direct { directSettings }
@@ -61,7 +61,7 @@ struct VerificationSettingsView: View {
                         Text(provider.uploadNotice).font(.subheadline)
                         Text(provider == .direct
                              ? "Submitted photos stay in memory while you return to your habitat. They are removed after a result or when you discard a failed scan; closing the app discards unfinished scans. This phone saves review results and photo fingerprints to prevent repeated rewards. It allows 30 review attempts per rolling 24 hours, including failures."
-                             : "EcoGotchi’s server keeps review results and photo fingerprints, but doesn’t save the photos. Server review limits apply.")
+                             : "Recycli’s server keeps review results and photo fingerprints, but doesn’t save the photos. Server review limits apply.")
                             .font(.caption).foregroundStyle(.secondary)
                         Link("Google Gemini data terms", destination: URL(string: "https://ai.google.dev/gemini-api/terms")!)
                     } header: { Text("Your photos") }

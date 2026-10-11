@@ -67,7 +67,7 @@ struct RecyclingLocationChecks {
         StubRecyclingMap.handler = { request in
             requests += 1
             precondition(request.httpMethod == "POST" && request.url?.scheme == "https")
-            precondition(request.value(forHTTPHeaderField: "User-Agent")?.contains("EcoGotchi") == true)
+            precondition(request.value(forHTTPHeaderField: "User-Agent")?.contains("Recycli") == true)
             return (200, fixture)
         }
         let result = try await service.search(area, now: start)

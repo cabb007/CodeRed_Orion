@@ -207,7 +207,7 @@ actor RecyclingLocationService {
         guard now >= retryAfter else { throw RecyclingLocationError.busy }
         var request = URLRequest(url: endpoint, timeoutInterval: 30)
         request.httpMethod = "POST"
-        request.setValue("EcoGotchi/1.0 (iOS recycling locator)", forHTTPHeaderField: "User-Agent")
+        request.setValue("Recycli/1.0 (iOS recycling locator)", forHTTPHeaderField: "User-Agent")
         request.setValue("application/x-www-form-urlencoded; charset=utf-8", forHTTPHeaderField: "Content-Type")
         var body = URLComponents()
         body.queryItems = [URLQueryItem(name: "data", value: area.query)]

@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 @main
-struct EcoGotchiApp: App {
+struct RecycliApp: App {
     @StateObject private var store = HabitatStore()
     @Environment(\.scenePhase) private var scenePhase
 
@@ -74,18 +74,17 @@ struct PixelButtonStyle: ButtonStyle {
 struct PixelWordmark: View {
     // Original 5x7 lettering, drawn as square cells so the title stays crisp.
     private let glyphs: [Character: [String]] = [
+        "R": ["11110","10001","10001","11110","10100","10010","10001"],
         "E": ["11111","10000","10000","11110","10000","10000","11111"],
         "C": ["01111","10000","10000","10000","10000","10000","01111"],
-        "O": ["01110","10001","10001","10001","10001","10001","01110"],
-        "G": ["01111","10000","10000","10111","10001","10001","01110"],
-        "T": ["11111","00100","00100","00100","00100","00100","00100"],
-        "H": ["10001","10001","10001","11111","10001","10001","10001"],
+        "Y": ["10001","10001","01010","00100","00100","00100","00100"],
+        "L": ["10000","10000","10000","10000","10000","10000","11111"],
         "I": ["11111","00100","00100","00100","00100","00100","11111"]
     ]
     var body: some View {
         Canvas { context, size in
-            let unit = min(size.width / 53, size.height / 7)
-            for (index, letter) in "ECOGOTCHI".enumerated() {
+            let unit = min(size.width / 41, size.height / 7)
+            for (index, letter) in "RECYCLI".enumerated() {
                 for (row, line) in (glyphs[letter] ?? []).enumerated() {
                     for (column, pixel) in line.enumerated() where pixel == "1" {
                         let rect = CGRect(x: CGFloat(index * 6 + column) * unit, y: CGFloat(row) * unit, width: unit, height: unit)
@@ -93,7 +92,7 @@ struct PixelWordmark: View {
                     }
                 }
             }
-        }.frame(width: 212, height: 28).accessibilityLabel("EcoGotchi")
+        }.frame(width: 164, height: 28).accessibilityLabel("Recycli")
     }
 }
 

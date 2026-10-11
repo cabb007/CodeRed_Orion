@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "0E8A3AD980EC179856012B7E"
-               BuildableName = "EcoGotchi.app"
-               BlueprintName = "EcoGotchi"
-               ReferencedContainer = "container:EcoGotchi.xcodeproj">
+               BuildableName = "Recycli.app"
+               BlueprintName = "Recycli"
+               ReferencedContainer = "container:Recycli.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -44,9 +44,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0E8A3AD980EC179856012B7E"
-            BuildableName = "EcoGotchi.app"
-            BlueprintName = "EcoGotchi"
-            ReferencedContainer = "container:EcoGotchi.xcodeproj">
+            BuildableName = "Recycli.app"
+            BlueprintName = "Recycli"
+            ReferencedContainer = "container:Recycli.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -61,9 +61,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "0E8A3AD980EC179856012B7E"
-            BuildableName = "EcoGotchi.app"
-            BlueprintName = "EcoGotchi"
-            ReferencedContainer = "container:EcoGotchi.xcodeproj">
+            BuildableName = "Recycli.app"
+            BlueprintName = "Recycli"
+            ReferencedContainer = "container:Recycli.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

@@ -1,17 +1,17 @@
-EcoGotchi custom artwork, generated with the built-in image generation tool.
+Recycli custom artwork, generated with the built-in image generation tool.
 Original scene and atlas PNGs are preserved in the asset catalog. The sprite atlas is cropped only at runtime; no alpha removal or post-generation recoloring. The original app icon is in Design/pip-icon-master.png; its iOS copy is packaged at the required 1024px size with nearest-neighbor scaling.
 
 APP ICON
 Use case: logo-brand
-Asset type: EcoGotchi iPhone app icon, square 1024x1024 opaque PNG.
-Input image: reference only, the existing EcoGotchi character atlas. Use only the yellow chick in top-left as the character reference; no other atlas objects.
+Asset type: Recycli iPhone app icon, square 1024x1024 opaque PNG.
+Input image: reference only, the existing Recycli character atlas. Use only the yellow chick in top-left as the character reference; no other atlas objects.
 Primary request: a polished original 8-bit pixel-art app icon showing Pip, the round butter-yellow chick with a two-leaf green sprout tuft, tiny orange beak, black pixel eyes, peach cheeks, and tiny orange feet. Preserve this character's recognizable silhouette and leaf tuft. The chick is large, centered and occupies about 72 percent of the square, with plenty of room around the sprout. Solid warm pale sage background, simple darker green pixel grass tufts below feet, maybe two tiny cream square sparkles near the chick. Strong dark-green pixel outline. Cheerful, clear, friendly at very small sizes.
 Style: chunky low-resolution pixel art, flat limited colors, nearest-neighbor hard square edges, no smoothing, no gradients, no texture.
 Constraints: full-bleed opaque square, no pre-rounded corners, no border, no text, no logo lettering, no watermark, no checkerboard, no transparency. Exactly one chick.
 
 HABITAT
 Use case: stylized-concept
-Asset type: production background for EcoGotchi, an iPhone environmental virtual pet game.
+Asset type: production background for Recycli, an iPhone environmental virtual pet game.
 Primary request: original cozy 8-bit pixel art woodland habitat named Willow Grove. Full-bleed landscape background, 3:2 aspect ratio.
 Scene/backdrop: small woodland clearing, lush rounded stepped-pixel trees framing left and right edges, pale mint sky and two tiny blocky clouds in upper third, forest foliage in distance, sunlit yellow-green grass through central foreground, small blue pond slightly right of center in lower half, a few reeds and stones at pond edge. Broad clear playable grass area across foreground and center for separate animal and litter sprites.
 Style/medium: authentic low-resolution pixel art, as if drawn on a 240x160 pixel grid and enlarged with nearest-neighbor. Hard square pixel edges throughout, crisp clusters, very limited 20-color palette, darker green stepped outlines, flat pixel shadows, no antialiasing, no gradients. Charming original retro handheld game art, no recognizable existing game characters.
@@ -20,7 +20,7 @@ Constraints: environment only, NO animals, NO people, NO trash, NO buildings, NO
 
 SPRITE ATLAS
 Use case: stylized-concept
-Asset type: production transparent sprite atlas for EcoGotchi, an original 8-bit environmental virtual pet iPhone game.
+Asset type: production transparent sprite atlas for Recycli, an original 8-bit environmental virtual pet iPhone game.
 Primary request: ONE perfectly regular 4-column by 3-row sprite sheet, 12 cells of equal dimensions, on a genuinely transparent RGBA background. Square overall image. No visible cell lines, no labels. Each sprite centered within its cell with generous completely transparent padding; all sprites fully contained and isolated. Flat front/three-quarter view from a slightly elevated game camera, grounded pose.
 Cell contents in exact reading order:
 Row 1, column 1: Pip, a tiny round butter-yellow chick, sprout-shaped green tuft on head, orange beak, two black pixel eyes, peach cheeks.

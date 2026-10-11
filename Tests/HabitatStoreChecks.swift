@@ -11,7 +11,7 @@ final class MemoryDefaults: UserDefaults {
 @MainActor
 struct HabitatStoreChecks {
     static func checkDecorationLayouts() throws {
-        let defaults = MemoryDefaults(suiteName: "EcoGotchi.LayoutChecks")!
+        let defaults = MemoryDefaults(suiteName: "Recycli.LayoutChecks")!
         let seed = HabitatState(points: 200, ownedDecorations: ["flowers", "house"])
         let saved = try JSONEncoder().encode(seed)
         defaults.set(saved, forKey: "ecogotchi.habitat.v1")
@@ -56,7 +56,7 @@ struct HabitatStoreChecks {
     }
 
     static func checkExpandedShop() throws {
-        let defaults = MemoryDefaults(suiteName: "EcoGotchi.ShopChecks")!
+        let defaults = MemoryDefaults(suiteName: "Recycli.ShopChecks")!
         defaults.set(try JSONEncoder().encode(HabitatState(points: 400)), forKey: "ecogotchi.habitat.v1")
         let store = HabitatStore(defaults: defaults)
         store.stockPreviewFood()
@@ -109,7 +109,7 @@ struct HabitatStoreChecks {
         checkActualPreview()
         try checkDecorationLayouts()
         try checkExpandedShop()
-        let defaults = MemoryDefaults(suiteName: "EcoGotchi.InMemoryChecks")!
+        let defaults = MemoryDefaults(suiteName: "Recycli.InMemoryChecks")!
         let store = HabitatStore(defaults: defaults)
         store.record(item: "Paper")
         precondition(store.state.points == 0 && store.state.actions.isEmpty, "Self-reporting cannot earn live rewards")
@@ -199,7 +199,7 @@ struct HabitatStoreChecks {
     }
 
     static func checkActualPreview() {
-        let defaults = MemoryDefaults(suiteName: "EcoGotchi.ActualPreview")!
+        let defaults = MemoryDefaults(suiteName: "Recycli.ActualPreview")!
         let store = HabitatStore(defaults: defaults)
         let original = store.state
         let assessment = review()
@@ -226,7 +226,7 @@ struct HabitatStoreChecks {
     }
 
     static func checkDemoRewards() {
-        let defaults = MemoryDefaults(suiteName: "EcoGotchi.DemoChecks")!
+        let defaults = MemoryDefaults(suiteName: "Recycli.DemoChecks")!
         let store = HabitatStore(defaults: defaults)
         precondition(store.isDemoRecycling, "The hackathon build starts in offline demo mode")
         let frames = ["bin", "item"].map {

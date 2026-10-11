@@ -12,7 +12,7 @@ final class RecyclingCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDe
     @Published private(set) var message: String?
     @Published private(set) var interruptionCount = 0
 
-    private let queue = DispatchQueue(label: "org.ecogotchi.camera")
+    private let queue = DispatchQueue(label: "org.recycli.camera")
     private let output = AVCapturePhotoOutput()
     private var configured = false // session queue only
     private var requestID = UUID() // main queue only
@@ -45,7 +45,7 @@ final class RecyclingCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDe
             guard let self, self.requestID == id else { return }
             guard allowed else {
                 self.starting = false
-                self.message = "Camera access is off. Enable EcoGotchi’s Camera permission in iPhone Settings."
+                self.message = "Camera access is off. Enable Recycli’s Camera permission in iPhone Settings."
                 return
             }
             self.queue.async { [weak self] in

@@ -7,7 +7,7 @@ struct VerificationConnection {
 
     static var savedURL: String { UserDefaults.standard.string(forKey: "ecogotchi.verification.url") ?? "" }
     // A development fallback for the Mac's current network; update when its address changes.
-    static var configuredDirectURL: String? { Bundle.main.object(forInfoDictionaryKey: "EcoGotchiLocalServerURL") as? String }
+    static var configuredDirectURL: String? { Bundle.main.object(forInfoDictionaryKey: "RecycliLocalServerURL") as? String }
 
     static func allowsLocalHTTP(host: String, directURL: String? = configuredDirectURL) -> Bool {
         let host = host.lowercased()
@@ -104,18 +104,18 @@ struct VerificationConnection {
             throw VerificationError.message(Self.connectionError(error))
         }
         guard let http = response as? HTTPURLResponse else {
-            throw VerificationError.message("This address didn’t return an EcoGotchi server response.")
+            throw VerificationError.message("This address didn’t return an Recycli server response.")
         }
         if http.statusCode == 401 {
-            throw VerificationError.message("The Mac responded, but the access token didn’t match. Copy ECOGOTCHI_ACCESS_TOKEN from server/.env, not GEMINI_API_KEY.")
+            throw VerificationError.message("The Mac responded, but the access token didn’t match. Copy RECYCLI_ACCESS_TOKEN from server/.env, not GEMINI_API_KEY.")
         }
         if http.statusCode == 404 {
-            throw VerificationError.message("This server doesn’t have the connection test yet. Restart the updated EcoGotchi server on your Mac and try again.")
+            throw VerificationError.message("This server doesn’t have the connection test yet. Restart the updated Recycli server on your Mac and try again.")
         }
         guard http.statusCode == 200,
               let result = try? JSONDecoder().decode(ConnectionStatus.self, from: data),
-              result.service == "ecogotchi", result.status == "ok", result.reviewsRemaining >= 0 else {
-            throw VerificationError.message("This address didn’t return a valid EcoGotchi connection check. Check the server address and port.")
+              ["recycli", "ecogotchi"].contains(result.service), result.status == "ok", result.reviewsRemaining >= 0 else {
+            throw VerificationError.message("This address didn’t return a valid Recycli connection check. Check the server address and port.")
         }
         return result
     }
@@ -123,17 +123,17 @@ struct VerificationConnection {
     static func connectionError(_ error: Error) -> String {
         switch (error as? URLError)?.code {
         case .cannotFindHost, .dnsLookupFailed:
-            return "Couldn’t find your Mac’s .local address. In AI connection settings, try Use this Mac’s direct address. Keep the Mac connected to your iPhone’s hotspot or the same Wi-Fi, and allow EcoGotchi’s Local Network access."
+            return "Couldn’t find your Mac’s .local address. In AI connection settings, try Use this Mac’s direct address. Keep the Mac connected to your iPhone’s hotspot or the same Wi-Fi, and allow Recycli’s Local Network access."
         case .cannotConnectToHost:
-            return "Found the address but couldn’t connect. Keep the EcoGotchi server running on your Mac with HOST=:: and port 8787 so both IPv4 and IPv6 can connect. Check that the Mac firewall allows it."
+            return "Found the address but couldn’t connect. Keep the Recycli server running on your Mac with HOST=:: and port 8787 so both IPv4 and IPv6 can connect. Check that the Mac firewall allows it."
         case .notConnectedToInternet, .dataNotAllowed:
-            return "No connection to the server. Connect to the same Wi-Fi as your Mac and enable Local Network for EcoGotchi in iPhone Settings."
+            return "No connection to the server. Connect to the same Wi-Fi as your Mac and enable Local Network for Recycli in iPhone Settings."
         case .timedOut:
             return "The request timed out. Keep your Mac awake and check that both devices can communicate on the same Wi-Fi. If this was a review, retry the same photos."
         case .appTransportSecurityRequiresSecureConnection:
             return "iOS blocked this connection. Use HTTPS for a hosted server, or your Mac’s http://name.local:8787 address for a local demo."
         default:
-            return "Couldn’t reach the review server. Keep the Mac awake, use the same Wi-Fi, and enable Local Network for EcoGotchi in iPhone Settings."
+            return "Couldn’t reach the review server. Keep the Mac awake, use the same Wi-Fi, and enable Local Network for Recycli in iPhone Settings."
         }
     }
 
@@ -157,7 +157,7 @@ struct VerificationConnection {
         guard let http = response as? HTTPURLResponse else { throw VerificationError.message("The server sent an invalid response.") }
         guard http.statusCode == 200 else {
             if http.statusCode == 401 {
-                throw VerificationError.message("The server access token didn’t match. Open AI connection settings and use ECOGOTCHI_ACCESS_TOKEN from server/.env, not the Gemini key.")
+                throw VerificationError.message("The server access token didn’t match. Open AI connection settings and use RECYCLI_ACCESS_TOKEN from server/.env, not the Gemini key.")
             }
             struct Failure: Decodable { let error: String }
             let failure = try? JSONDecoder().decode(Failure.self, from: data)

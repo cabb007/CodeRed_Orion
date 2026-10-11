@@ -8,7 +8,7 @@ import { ClientError, decide, validateSubmission } from './policy.mjs';
 import { createGeminiVerifier } from './gemini.mjs';
 
 export function createVerificationServer({ token, verify, databasePath = ':memory:', dailyReviewLimit = 30, now = () => Date.now() }) {
-  if (!token || token.length < 24) throw new Error('ECOGOTCHI_ACCESS_TOKEN must have at least 24 characters.');
+  if (!token || token.length < 24) throw new Error('RECYCLI_ACCESS_TOKEN must have at least 24 characters.');
   if (!Number.isSafeInteger(dailyReviewLimit) || dailyReviewLimit < 0) throw new Error('DAILY_REVIEW_LIMIT must be a nonnegative integer.');
   if (databasePath !== ':memory:') mkdirSync(dirname(resolve(databasePath)), { recursive: true });
   const db = new DatabaseSync(databasePath);
@@ -33,10 +33,10 @@ export function createVerificationServer({ token, verify, databasePath = ':memor
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { status: 'ok' });
     const connectionCheck = req.method === 'GET' && req.url === '/v1/status';
     if (!connectionCheck && (req.method !== 'POST' || req.url !== '/v1/recycling/verify')) return send(res, 404, { error: 'Not found.' });
-    if (!authenticate(req.headers.authorization)) return send(res, 401, { error: 'Check the EcoGotchi server access token.' });
+    if (!authenticate(req.headers.authorization)) return send(res, 401, { error: 'Check the Recycli server access token.' });
     if (connectionCheck) {
       const used = db.prepare('SELECT COUNT(*) AS count FROM review_attempts WHERE created>?').get(now() - 86_400_000).count;
-      return send(res, 200, { service: 'ecogotchi', status: 'ok', reviewsRemaining: Math.max(0, dailyReviewLimit - used) });
+      return send(res, 200, { service: 'recycli', status: 'ok', reviewsRemaining: Math.max(0, dailyReviewLimit - used) });
     }
     const client = req.headers['x-installation-id']?.toLowerCase();
     if (typeof client !== 'string' || !/^[a-f0-9-]{36}$/i.test(client)) return send(res, 400, { error: 'Missing installation ID.' });
@@ -117,13 +117,14 @@ export function createVerificationServer({ token, verify, databasePath = ':memor
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
   if (!process.env.GEMINI_API_KEY) throw new Error('Set GEMINI_API_KEY in server/.env.');
   const server = createVerificationServer({
-    token: process.env.ECOGOTCHI_ACCESS_TOKEN,
+    // Keep existing local server configuration working after the branding change.
+    token: process.env.RECYCLI_ACCESS_TOKEN || process.env.ECOGOTCHI_ACCESS_TOKEN,
     verify: createGeminiVerifier({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
       maxOutputTokens: Number(process.env.GEMINI_MAX_OUTPUT_TOKENS ?? 2048) }),
     dailyReviewLimit: Number(process.env.DAILY_REVIEW_LIMIT ?? 30),
     databasePath: process.env.DATABASE_PATH || './data/verification.sqlite'
   });
   server.listen({ port: Number(process.env.PORT || 8787), host: process.env.HOST || '127.0.0.1', ipv6Only: false }, () => {
-    console.log(`EcoGotchi verification server ready on port ${process.env.PORT || 8787}. No photos are written to disk.`);
+    console.log(`Recycli verification server ready on port ${process.env.PORT || 8787}. No photos are written to disk.`);
   });
 }

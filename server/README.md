@@ -1,4 +1,4 @@
-# EcoGotchi recycling review
+# Recycli recycling review
 
 The app now starts in offline **Demo** mode and does not need this server. For Gemini without a Mac, select **Actual → On iPhone** in Recycle → gear and enter your personal key. To use this server instead, select **Actual → Review server**. Demo awards are labeled separately and never call this server.
 
@@ -22,7 +22,7 @@ You need Node.js 22.13 or newer and a [Gemini API key from Google AI Studio](htt
    node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"
    ```
 
-   Copy that token into `ECOGOTCHI_ACCESS_TOKEN=`. This token lets your app use your server; it is not the Gemini key.
+   Copy that token into `RECYCLI_ACCESS_TOKEN=`. This token lets your app use your server; it is not the Gemini key.
 
 4. For an iPhone demo on the same trusted Wi-Fi, set `HOST=::` in `.env` (IPv4 + IPv6, including IPv6 hotspots). Start the server:
 
@@ -40,13 +40,13 @@ You need Node.js 22.13 or newer and a [Gemini API key from Google AI Studio](htt
 
    If it prints `Jinhua-MacBook`, the app address is `http://Jinhua-MacBook.local:8787`. An iPhone's `localhost` refers to the iPhone, so use the Mac’s `.local` name. If name lookup fails, the app supports private IPv4 addresses and **Use this Mac’s direct address** for the current development Mac.
 
-6. Rebuild EcoGotchi in Xcode and run on your iPhone. Choose **Actual → Review server** in Scan settings. Exit developer preview if rewards should affect your saved game. Tap **Recycle → Set up AI connection** (or the gear). Enter the server address and the separate access token, then tap **Save & test connection**. This checks the server and access token without uploading photos or calling Gemini. When it succeeds, the access token is stored in the iPhone Keychain; tap **Done** to continue. This test does not validate Gemini's key, model, quota, or image review.
+6. Rebuild Recycli in Xcode and run on your iPhone. Choose **Actual → Review server** in Scan settings. Exit developer preview if rewards should affect your saved game. Tap **Recycle → Set up AI connection** (or the gear). Enter the server address and the separate access token, then tap **Save & test connection**. This checks the server and access token without uploading photos or calling Gemini. When it succeeds, the access token is stored in the iPhone Keychain; tap **Done** to continue. This test does not validate Gemini's key, model, quota, or image review.
 
 7. In one camera session, capture **Your bin → Your item**. The camera stays open between steps. Finish within ten minutes. Inspect the two photos and tap **Send for review** to upload them together in one request; the live preview is never uploaded. Approved actions add leaves and clear one piece of virtual litter; other results explain why no reward was earned.
 
-The Mac and iPhone must share a network that allows devices to communicate. If connection fails, check the server is running, the `.local` name and token match, and EcoGotchi has Local Network permission in iPhone Settings. `http://your-mac.local:8787/health` in Safari checks server reachability, but does not validate the token or Gemini configuration. Local HTTP is unencrypted and is intended only for a trusted Wi-Fi demo; use an HTTPS address for hosting.
+The Mac and iPhone must share a network that allows devices to communicate. If connection fails, check the server is running, the `.local` name and token match, and Recycli has Local Network permission in iPhone Settings. `http://your-mac.local:8787/health` in Safari checks server reachability, but does not validate the token or Gemini configuration. Local HTTP is unencrypted and is intended only for a trusted Wi-Fi demo; use an HTTPS address for hosting.
 
-The app's **Save & test connection** uses authenticated `GET /v1/status` and reports the shared daily review budget. A wrong token, unreachable address, timeout, or an older server without this endpoint gets a specific setup message. Use `ECOGOTCHI_ACCESS_TOKEN` on the phone, not `GEMINI_API_KEY`. School and guest Wi-Fi may isolate devices; if the Mac's health page cannot be reached from the iPhone, use a network that allows peer connections or host the server at an HTTPS address. Repeated connection tests do not use Gemini tokens or reserve AI review attempts.
+The app's **Save & test connection** uses authenticated `GET /v1/status` and reports the shared daily review budget. A wrong token, unreachable address, timeout, or an older server without this endpoint gets a specific setup message. Use `RECYCLI_ACCESS_TOKEN` on the phone, not `GEMINI_API_KEY`. School and guest Wi-Fi may isolate devices; if the Mac's health page cannot be reached from the iPhone, use a network that allows peer connections or host the server at an HTTPS address. Repeated connection tests do not use Gemini tokens or reserve AI review attempts.
 
 ## Control AI usage
 
@@ -99,6 +99,8 @@ Tests use synthetic image bytes and mocked Gemini responses. They cover reward p
 
 ## Direct address on an IPv6 hotspot
 
-The server must listen with `HOST=::`; `HOST=0.0.0.0` only listens for IPv4. The development app has a **Use this Mac’s direct address** button in AI connection settings. Its `EcoGotchiLocalServerURL` in `EcoGotchi/Info.plist` points to the development Mac’s current IPv6 address, with a matching, specific `NSExceptionDomains` entry. Both must be updated and the app rebuilt if that IPv6 address changes after reconnecting or switching networks. The token remains in Keychain and is not part of the address. Private IPv4 addresses are also supported; the IPv4 translation address `192.0.0.2` on an IPv6 hotspot is not a peer-reachable LAN address and is not accepted.
+The server must listen with `HOST=::`; `HOST=0.0.0.0` only listens for IPv4. The development app has a **Use this Mac’s direct address** button in AI connection settings. Its `RecycliLocalServerURL` in `Recycli/Info.plist` points to the development Mac’s current IPv6 address, with a matching, specific `NSExceptionDomains` entry. Both must be updated and the app rebuilt if that IPv6 address changes after reconnecting or switching networks. The token remains in Keychain and is not part of the address. Private IPv4 addresses are also supported; the IPv4 translation address `192.0.0.2` on an IPv6 hotspot is not a peer-reachable LAN address and is not accepted.
 
 The app keeps HTTPS for public hosts and permits HTTP only for local names, private/link-local IPv4 ranges, and the explicitly configured development IPv6 host. The scoped IP exceptions follow [Apple’s ATS configuration](https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity/nsexceptiondomains). Device isolation and Local Network permission can still prevent a connection; the direct address only bypasses name lookup.
+
+Recycli uses `RECYCLI_ACCESS_TOKEN` for new server setups. Existing `.env` files using `ECOGOTCHI_ACCESS_TOKEN` continue to work.

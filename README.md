@@ -1,11 +1,13 @@
-# EcoGotchi 🌱
+# Recycli 🌱
 
 A pocket wilderness that grows through real-world environmental care. Native SwiftUI iPhone prototype for the CodeRED environment track.
 
+The app and Xcode project are now named **Recycli**. Existing installation, save, preference, and Keychain identifiers stay unchanged so upgrades keep your habitat progress and saved API key.
+
 ## Run on iPhone or simulator
 
-1. Install Xcode 16 or newer and open `EcoGotchi.xcodeproj`.
-2. Select the EcoGotchi scheme and an iPhone simulator (iOS 17+), then Run.
+1. Install Xcode 16 or newer and open `Recycli.xcodeproj`.
+2. Select the Recycli scheme and an iPhone simulator (iOS 17+), then Run.
 3. For a physical iPhone, choose your Apple development team in Signing & Capabilities and set a unique bundle identifier if needed.
 
 **Hackathon demo mode is on by default and works offline.** Tap Recycle and capture bin → item. Each photo advances immediately and plays an original retro chime with haptics, a flash, pixel particles, and a brief success message. The next shutter is not blocked by the celebration. After the second photo, the app automatically awards **20 leaves** and clears one piece of virtual litter. No server, hotspot, Gemini key, or network connection is needed. Demo actions are labeled in the scan screen and journal, and their rewards persist normally.
@@ -21,7 +23,7 @@ Tap **Dev → Recycling mode** or **Recycle → gear** to switch between **Demo*
 
 The key lives in the iPhone Keychain, never in the app bundle, source, UserDefaults, or review history. **Remove saved key** deletes it from Keychain. Connection testing uses Google's [model metadata endpoint](https://ai.google.dev/api/models) without photos or model generation; it doesn't establish available generation quota or photo-review accuracy. Actual submissions use one [Interactions API](https://ai.google.dev/gemini-api/docs/interactions) request containing two JPEGs with `store: false` and a 2,048-token output cap. No continuous camera feed is uploaded.
 
-Quick uses [Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) with minimal thinking, concise JSON, a high-detail bin image, and medium-detail item image. The item photo is resized to a 960-pixel longest edge at JPEG quality 0.65; the bin remains 1,200 pixels at 0.7. Detailed preserves both at 1,200 pixels and the default high media detail, with low thinking. The request retains all evidence checks in both modes; unclear details still earn zero leaves. Reduced detail and a smaller model trade some recognition quality for speed. The camera prioritizes fast photo delivery, and there is no artificial scan delay after capture. The direct client reuses its HTTPS session and caps each resource request at 60 seconds. After **Send for review**, tap **Back to my habitat** and keep playing while the app reviews in the background. A habitat banner opens the pending status or result; approved rewards apply automatically to the habitat where the review started, even if you visit another habitat. An elapsed timer and **Cancel review** let you keep completed photos and retry without starting over; cancelled attempts may still consume quota. There are no automatic retries or fallback awards. Keep EcoGotchi open: switching apps may suspend review, and quitting discards unfinished scans. Submitted photos stay in memory until a result, a failed scan is discarded, or its developer preview is reset/exited. Only one review can be pending at a time.
+Quick uses [Flash-Lite](https://ai.google.dev/gemini-api/docs/models/gemini-3.5-flash-lite) with minimal thinking, concise JSON, a high-detail bin image, and medium-detail item image. The item photo is resized to a 960-pixel longest edge at JPEG quality 0.65; the bin remains 1,200 pixels at 0.7. Detailed preserves both at 1,200 pixels and the default high media detail, with low thinking. The request retains all evidence checks in both modes; unclear details still earn zero leaves. Reduced detail and a smaller model trade some recognition quality for speed. The camera prioritizes fast photo delivery, and there is no artificial scan delay after capture. The direct client reuses its HTTPS session and caps each resource request at 60 seconds. After **Send for review**, tap **Back to my habitat** and keep playing while the app reviews in the background. A habitat banner opens the pending status or result; approved rewards apply automatically to the habitat where the review started, even if you visit another habitat. An elapsed timer and **Cancel review** let you keep completed photos and retry without starting over; cancelled attempts may still consume quota. There are no automatic retries or fallback awards. Keep Recycli open: switching apps may suspend review, and quitting discards unfinished scans. Submitted photos stay in memory until a result, a failed scan is discarded, or its developer preview is reset/exited. Only one review can be pending at a time.
 
 Actual recognizes the bin **visually**, without requiring a readable label or material-specific sorting icon. A recognizable recycling symbol, sorting opening, and combined bin/station design can support a **likely match** with a commonly recyclable item. A plain wastebasket or bin color alone is insufficient. Visible incompatible sorting rules override appearance; uncertain, contaminated, or suspicious evidence earns no leaves. Results distinguish visual plausibility from local acceptance and do not claim disposal was verified.
 
@@ -72,7 +74,7 @@ The gear opens **Scan settings**, including the sound switch and **Demo / Actual
 
 Tap **Find a bin** at the top of the habitat. Choose **Use my location** and allow location access, or enter a city and state / ZIP code. Switch between 5, 10, and 25 km; tap a pin or list entry for listed materials, access information, source details, and **Directions** in Apple Maps. The habitat stays on the main screen.
 
-No API key, Gemini tokens, or EcoGotchi server is needed. Recycling points come from [OpenStreetMap via Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API); near Houston, the app also includes city-run facilities from the [City of Houston recycling dataset](https://services2.arcgis.com/LYMgRMwHfrWWEg3s/ArcGIS/rest/services/City_of_Houston_SWMD_Recycling_Disposal_Facilities/FeatureServer). The map labels each source. Locations explicitly marked private/restricted or disused are excluded. Missing materials and access details remain unknown; city listing does not establish residency eligibility or accepted items. Coverage varies and listings can change, so check the location’s signs/source before visiting. The map does not verify recycling or award leaves.
+No API key, Gemini tokens, or Recycli server is needed. Recycling points come from [OpenStreetMap via Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API); near Houston, the app also includes city-run facilities from the [City of Houston recycling dataset](https://services2.arcgis.com/LYMgRMwHfrWWEg3s/ArcGIS/rest/services/City_of_Houston_SWMD_Recycling_Disposal_Facilities/FeatureServer). The map labels each source. Locations explicitly marked private/restricted or disused are excluded. Missing materials and access details remain unknown; city listing does not establish residency eligibility or accepted items. Coverage varies and listings can change, so check the location’s signs/source before visiting. The map does not verify recycling or award leaves.
 
 Location is requested once only after tapping **Use my location**, with no background tracking. Coordinates sent to Overpass are rounded to three decimal places (roughly 100 m); city/ZIP searches go through Apple Maps. The city supplement downloads the public facility list without sending coordinates. Search results are cached in memory for 15 minutes across panel openings, with clearly labeled offline results for up to 24 hours. The app observes server backoff responses, bounds the search radius, and cancels unfinished requests when the panel closes. Caches clear when the app quits. Public Overpass capacity is shared; a wider release should use a suitable hosted endpoint or shared server-side cache.
 
@@ -102,52 +104,52 @@ Paid cosmetics and donations are a future concept only. There is no payment proc
 
 ## Custom art
 
-Generated with the built-in image generation tool. Full prompts are saved in `Design/pixel-art-prompts.txt`, `Design/habitat-state-prompts.txt`, [Art/habitat-expansion-prompts.json](Art/habitat-expansion-prompts.json), and [Art/habitat-condition-prompts.json](Art/habitat-condition-prompts.json). The manifests record exact prompts and saved asset paths; the condition manifest also records the healthy reference image for each edit.
+Generated with the built-in image generation tool. Artwork prompts, with branding and asset paths updated to Recycli, are saved in `Design/pixel-art-prompts.txt`, `Design/habitat-state-prompts.txt`, [Art/habitat-expansion-prompts.json](Art/habitat-expansion-prompts.json), and [Art/habitat-condition-prompts.json](Art/habitat-condition-prompts.json). The manifests record exact prompts and saved asset paths; the condition manifest also records the healthy reference image for each edit.
 
-- `EcoGotchi/Assets.xcassets/GroveThriving.imageset/habitat.png`: thriving portrait scene, also used with slight desaturation and litter for the Littered state.
-- `EcoGotchi/Assets.xcassets/GroveTarnished.imageset/habitat.png`: dull foliage and murky water.
-- `EcoGotchi/Assets.xcassets/GrovePolluted.imageset/habitat.png`: dry ground, sparse foliage, and polluted water.
-- `EcoGotchi/Assets.xcassets/WillowGrovePixel.imageset/willow-grove.png`: preserved original landscape artwork.
-- `EcoGotchi/Assets.xcassets/EcoSpritesPixel.imageset/eco-sprites.png`: transparent atlas containing four animals, three decorations, a leaf currency icon, and four litter sprites.
-- `EcoGotchi/Assets.xcassets/OceanReef.imageset/art.png`: thriving underwater reef background; `OceanLittered`, `OceanTarnished`, and `OceanPolluted` imagesets contain its progressively damaged states.
-- `EcoGotchi/Assets.xcassets/SnowGlade.imageset/art.png`: thriving snowy glade background; `SnowLittered`, `SnowTarnished`, and `SnowPolluted` imagesets contain its progressively damaged states.
-- `EcoGotchi/Assets.xcassets/FriendsAndFood.imageset/art.png`: transparent 4×3 atlas of eight new pets and four foods.
-- `EcoGotchi/Assets.xcassets/HabitatDecor.imageset/art.png`: transparent 3×3 atlas of nine new decorations.
-- `EcoGotchi/Assets.xcassets/AppIcon.appiconset/app-icon.png`: opaque 1024px Pip icon, packaged from the preserved generated master in `Design/pip-icon-master.png`.
+- `Recycli/Assets.xcassets/GroveThriving.imageset/habitat.png`: thriving portrait scene, also used with slight desaturation and litter for the Littered state.
+- `Recycli/Assets.xcassets/GroveTarnished.imageset/habitat.png`: dull foliage and murky water.
+- `Recycli/Assets.xcassets/GrovePolluted.imageset/habitat.png`: dry ground, sparse foliage, and polluted water.
+- `Recycli/Assets.xcassets/WillowGrovePixel.imageset/willow-grove.png`: preserved original landscape artwork.
+- `Recycli/Assets.xcassets/EcoSpritesPixel.imageset/eco-sprites.png`: transparent atlas containing four animals, three decorations, a leaf currency icon, and four litter sprites.
+- `Recycli/Assets.xcassets/OceanReef.imageset/art.png`: thriving underwater reef background; `OceanLittered`, `OceanTarnished`, and `OceanPolluted` imagesets contain its progressively damaged states.
+- `Recycli/Assets.xcassets/SnowGlade.imageset/art.png`: thriving snowy glade background; `SnowLittered`, `SnowTarnished`, and `SnowPolluted` imagesets contain its progressively damaged states.
+- `Recycli/Assets.xcassets/FriendsAndFood.imageset/art.png`: transparent 4×3 atlas of eight new pets and four foods.
+- `Recycli/Assets.xcassets/HabitatDecor.imageset/art.png`: transparent 3×3 atlas of nine new decorations.
+- `Recycli/Assets.xcassets/AppIcon.appiconset/app-icon.png`: opaque 1024px Pip icon, packaged from the preserved generated master in `Design/pip-icon-master.png`.
 
-Atlas content is cropped once in memory and drawn with nearest-neighbor interpolation. The original atlas uses hand-spaced `GameSprite.bounds`; the two new atlases use regular grids. Keep these layouts in sync if replacing artwork. Colors, stepped frames, button style, and the pixel wordmark are in `EcoGotchiApp.swift`. Existing saves remain compatible; older journal entries default to 20 earned leaves.
+Atlas content is cropped once in memory and drawn with nearest-neighbor interpolation. The original atlas uses hand-spaced `GameSprite.bounds`; the two new atlases use regular grids. Keep these layouts in sync if replacing artwork. Colors, stepped frames, button style, and the pixel wordmark are in `RecycliApp.swift`. Existing saves remain compatible; older journal entries default to 20 earned leaves.
 
 ## Validation
 
 Run the Foundation-only game logic checks without Xcode:
 
 ```sh
-swiftc EcoGotchi/Models/HabitatState.swift Tests/HabitatStateChecks.swift -o /tmp/ecogotchi-checks
-/tmp/ecogotchi-checks
+swiftc Recycli/Models/HabitatState.swift Tests/HabitatStateChecks.swift -o /tmp/recycli-checks
+/tmp/recycli-checks
 
-swiftc EcoGotchi/Models/HabitatState.swift EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/HabitatStore.swift Tests/HabitatStoreChecks.swift -o /tmp/ecogotchi-store-checks
-/tmp/ecogotchi-store-checks
+swiftc Recycli/Models/HabitatState.swift Recycli/Models/RecyclingVerification.swift Recycli/Models/HabitatStore.swift Tests/HabitatStoreChecks.swift -o /tmp/recycli-store-checks
+/tmp/recycli-store-checks
 
-swiftc EcoGotchi/Models/HabitatState.swift EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/HabitatStore.swift Tests/BackgroundReviewChecks.swift -o /tmp/ecogotchi-background-checks
-/tmp/ecogotchi-background-checks
+swiftc Recycli/Models/HabitatState.swift Recycli/Models/RecyclingVerification.swift Recycli/Models/HabitatStore.swift Tests/BackgroundReviewChecks.swift -o /tmp/recycli-background-checks
+/tmp/recycli-background-checks
 
-swiftc EcoGotchi/Models/HabitatState.swift Tests/HabitatExpansionChecks.swift -o /tmp/ecogotchi-expansion-checks
-/tmp/ecogotchi-expansion-checks
+swiftc Recycli/Models/HabitatState.swift Tests/HabitatExpansionChecks.swift -o /tmp/recycli-expansion-checks
+/tmp/recycli-expansion-checks
 
-swiftc EcoGotchi/Models/RecyclingLocations.swift Tests/RecyclingLocationChecks.swift -o /tmp/ecogotchi-location-checks
-/tmp/ecogotchi-location-checks
+swiftc Recycli/Models/RecyclingLocations.swift Tests/RecyclingLocationChecks.swift -o /tmp/recycli-location-checks
+/tmp/recycli-location-checks
 
-swiftc EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/RecyclingCaptureDraft.swift Tests/RecyclingCaptureChecks.swift -o /tmp/ecogotchi-capture-checks
-/tmp/ecogotchi-capture-checks
+swiftc Recycli/Models/RecyclingVerification.swift Recycli/Models/RecyclingCaptureDraft.swift Tests/RecyclingCaptureChecks.swift -o /tmp/recycli-capture-checks
+/tmp/recycli-capture-checks
 ```
 
-Background review checks cover pending status, no early awards, correct target habitat, retry, cancellation, invalid receipts, and live/developer isolation. Game and store checks cover condition boundaries, pollution timing, persistent/idempotent demo rewards, mode switching, reviewed rewards, malformed/duplicate receipt rejection, purchases, old saves, and developer-preview persistence isolation. Decoration checks cover saved positions and locks, rejected movement while locked, invalid coordinates, layout resets, and preview isolation. Expansion checks cover independent pollution and pet milestones, shared currency, food costs/limits, one-item consumption, meal persistence, wrong-habitat rejection, legacy-save migration, and preview isolation. Capture checks cover bin-first ordering, incomplete captures, identical-photo rejection, stable retry IDs/payloads, and restarting. Roaming, gravity, throw limits, stable landings, paused time steps, and sprite bounds can be checked with `swiftc EcoGotchi/Models/PetMotion.swift Tests/PetMotionChecks.swift -o /tmp/ecogotchi-pet-checks && /tmp/ecogotchi-pet-checks`. Run `npm test` in `server` for mocked Gemini and HTTP integration checks, including persistent review limits, concurrent last-slot requests, and truncated model responses. The iPhone Debug build compiles with Xcode. Camera, pet gestures, decoration controls, animation, haptic, and sound behavior still need physical-iPhone testing. On a phone, check a high drop and a fast flick, lock and unlock each decoration from both the scene and Shop, reopen the app to confirm layouts and food counts, switch among all three habitats, feed each starter pet, and try developer preview and Reduce Motion. Actual Gemini accuracy checks need a configured personal key or review server, real photos, and a device with internet. Unplug the iPhone, disconnect or shut down the Mac, and test Actual over cellular and Wi-Fi. Check Demo/Actual switching inside developer preview, temporary reward restoration, key removal, bad-key/model/quota messages, and retry behavior. Check permission denial, rejected/unclear reviews, network retry, reward persistence, and small-screen layouts before presenting.
+Background review checks cover pending status, no early awards, correct target habitat, retry, cancellation, invalid receipts, and live/developer isolation. Game and store checks cover condition boundaries, pollution timing, persistent/idempotent demo rewards, mode switching, reviewed rewards, malformed/duplicate receipt rejection, purchases, old saves, and developer-preview persistence isolation. Decoration checks cover saved positions and locks, rejected movement while locked, invalid coordinates, layout resets, and preview isolation. Expansion checks cover independent pollution and pet milestones, shared currency, food costs/limits, one-item consumption, meal persistence, wrong-habitat rejection, legacy-save migration, and preview isolation. Capture checks cover bin-first ordering, incomplete captures, identical-photo rejection, stable retry IDs/payloads, and restarting. Roaming, gravity, throw limits, stable landings, paused time steps, and sprite bounds can be checked with `swiftc Recycli/Models/PetMotion.swift Tests/PetMotionChecks.swift -o /tmp/recycli-pet-checks && /tmp/recycli-pet-checks`. Run `npm test` in `server` for mocked Gemini and HTTP integration checks, including persistent review limits, concurrent last-slot requests, and truncated model responses. The iPhone Debug build compiles with Xcode. Camera, pet gestures, decoration controls, animation, haptic, and sound behavior still need physical-iPhone testing. On a phone, check a high drop and a fast flick, lock and unlock each decoration from both the scene and Shop, reopen the app to confirm layouts and food counts, switch among all three habitats, feed each starter pet, and try developer preview and Reduce Motion. Actual Gemini accuracy checks need a configured personal key or review server, real photos, and a device with internet. Unplug the iPhone, disconnect or shut down the Mac, and test Actual over cellular and Wi-Fi. Check Demo/Actual switching inside developer preview, temporary reward restoration, key removal, bad-key/model/quota messages, and retry behavior. Check permission denial, rejected/unclear reviews, network retry, reward persistence, and small-screen layouts before presenting.
 
 Direct Gemini transport and policy checks (mocked Google responses, no key needed):
 
 ```sh
-swiftc EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/VerificationConnection.swift EcoGotchi/Models/GeminiDirectConnection.swift EcoGotchi/Models/GeminiReview.swift Tests/GeminiReviewChecks.swift -o /tmp/ecogotchi-gemini-checks
-/tmp/ecogotchi-gemini-checks
+swiftc Recycli/Models/RecyclingVerification.swift Recycli/Models/VerificationConnection.swift Recycli/Models/GeminiDirectConnection.swift Recycli/Models/GeminiReview.swift Tests/GeminiReviewChecks.swift -o /tmp/recycli-gemini-checks
+/tmp/recycli-gemini-checks
 ```
 
-`EcoGotchi/Resources/GeminiReview.json` mirrors the prompt and output schema in `server/gemini.mjs`. Keep them in sync when changing assessment rules. The Swift receipt policy in `GeminiReview.swift` mirrors `server/policy.mjs`.
+`Recycli/Resources/GeminiReview.json` mirrors the prompt and output schema in `server/gemini.mjs`. Keep them in sync when changing assessment rules. The Swift receipt policy in `GeminiReview.swift` mirrors `server/policy.mjs`.

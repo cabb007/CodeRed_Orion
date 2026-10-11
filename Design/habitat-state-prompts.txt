@@ -2,7 +2,7 @@ Full-screen habitat states, generated with the built-in image generation tool.
 
 THRIVING PORTRAIT
 Use case: style-transfer
-Asset type: EcoGotchi full-screen portrait pixel-art habitat background for an iPhone, 9:16 aspect ratio.
+Asset type: Recycli full-screen portrait pixel-art habitat background for an iPhone, 9:16 aspect ratio.
 Input image: existing Willow Grove background is the visual identity reference. Make a portrait version of this exact little environment in the same original chunky pixel art style.
 Primary request: expand and recompose Willow Grove for a full-height phone screen, replacing a small landscape card. The scene fills the entire tall image: calm pale mint sky with tiny cream pixel clouds in top quarter; large dense healthy pixel trees along both side edges, distant forest across the upper-middle; a broad open bright grassy clearing in the middle and bottom; a small blue pond toward the right at about x=70%, y=56%; quiet foreground grass at bottom. Preserve the cozy green, mint, yellow-green palette and crisp square-pixel shapes of the reference.
 Composition for gameplay: center top 8-22% of image is simple sky for an overlaid small status; main animals will stand in the clearing at y=58-75%. The bottom 20% must be calm grassy negative space, no large stones or objects, because a camera button will overlay the bottom center. Preserve trees on edges, not covering the central play area.
@@ -11,14 +11,14 @@ Constraints: NO animals, NO litter or trash objects, NO interface, NO text, NO l
 
 TARNISHED
 Use case: precise-object-edit
-Asset type: an alternate condition of the SAME full-screen EcoGotchi pixel-art habitat.
+Asset type: an alternate condition of the SAME full-screen Recycli pixel-art habitat.
 Edit target: the provided portrait Willow Grove image.
 HARD INVARIANTS: Keep the exact same portrait aspect ratio, camera, composition, tree trunk positions, silhouettes of the main trees, distant forest positions, pond location and contour, stones, and grass layout. Every structure stays registered to the reference. This is a state swap inside a game, not a different environment. Keep the same chunky 8-bit pixel art detail and pixel scale. No UI, text, animals, or trash objects: the game draws litter separately. Do not add buildings or new objects.
 Change ONLY the health of the natural environment: TARNISHED state, moderately polluted. Grass becomes dull yellow-olive with some brown dry pixel patches; some tree foliage becomes muted olive and ochre with a few sparse leaves; the pond becomes murky grey-green with dull olive algae along the edge, preserving its exact outline. Sky takes on a pale dusty grey-yellow cast. The grove is still alive and recognizable, just neglected and in need of care. Gentle melancholy, not night, not horror. No glowing effects. Full bleed portrait.
 
 POLLUTED
 Use case: precise-object-edit
-Asset type: an alternate condition of the SAME full-screen EcoGotchi pixel-art habitat.
+Asset type: an alternate condition of the SAME full-screen Recycli pixel-art habitat.
 Edit target: the provided portrait Willow Grove image.
 HARD INVARIANTS: Keep the exact same portrait aspect ratio, camera, composition, tree trunk positions, silhouettes of the main trees, distant forest positions, pond location and contour, stones, and grass layout. Every structure stays registered to the reference. This is a state swap inside a game, not a different environment. Keep the same chunky 8-bit pixel art detail and pixel scale. No UI, text, animals, or trash objects: the game draws litter separately. Do not add buildings or new objects.
 Change ONLY the health of the natural environment: POLLUTED state, severely neglected but recoverable. Desaturated grey-brown grass with clearly visible dry cracked earth patches; tree canopies become sparse dark olive-brown while keeping outer silhouettes and trunk locations; a few dead pixel branches visible within them. Pond water becomes dark muddy olive with pixel algae scum, preserving its contour. Grey dusty overcast sky, subdued smoky haze behind the trees. Whole environment clearly less healthy than the lush reference. Still readable and cute, daytime, no horror. No literal trash objects, these are separate game sprites. Full bleed portrait.

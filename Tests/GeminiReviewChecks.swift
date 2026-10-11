@@ -73,7 +73,7 @@ struct GeminiReviewChecks {
         precondition(GeminiDirectConnection.preferredModel(in: customPreferences) == "gemini-3.6-flash",
                      "Migration preserves custom models")
         precondition(GeminiDirectConnection.preferredModel(in: ReviewDefaults()) == GeminiDirectConnection.defaultModel)
-        let config = try Data(contentsOf: URL(fileURLWithPath: "EcoGotchi/Resources/GeminiReview.json"))
+        let config = try Data(contentsOf: URL(fileURLWithPath: "Recycli/Resources/GeminiReview.json"))
         let capture = submission()
         let request = try GeminiReviewProtocol.request(for: capture, apiKey: connection.apiKey, model: connection.model, configuration: config)
         precondition(request.url?.absoluteString == "https://generativelanguage.googleapis.com/v1beta/interactions")
@@ -180,7 +180,7 @@ struct GeminiReviewChecks {
             return (200, try response())
         }
         try await connection.testConnection(session: session)
-        let defaults = ReviewDefaults(suiteName: "EcoGotchi.GeminiChecks")!
+        let defaults = ReviewDefaults(suiteName: "Recycli.GeminiChecks")!
         let client = GeminiReviewClient(defaults: defaults, dailyLimit: 1)
         let beforeCancelled = GeminiMockProtocol.requestCount
         let cancelled = Task {
@@ -214,7 +214,7 @@ struct GeminiReviewChecks {
             GeminiMockProtocol.handler = { _ in (status, Data()) }
             await expectAsyncFailure("Provider errors must not produce a receipt") { _ = try await GeminiDirectConnection.send(request, session: session) }
         }
-        let failureDefaults = ReviewDefaults(suiteName: "EcoGotchi.GeminiFailures")!
+        let failureDefaults = ReviewDefaults(suiteName: "Recycli.GeminiFailures")!
         let failing = GeminiReviewClient(defaults: failureDefaults, dailyLimit: 1)
         await expectAsyncFailure("Failed review consumes the reserved attempt") {
             _ = try await failing.assess(capture, connection: connection, configuration: config, session: session, now: now)

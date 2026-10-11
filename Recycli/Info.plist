@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>EcoGotchi</string>
+	<string>Recycli</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -21,10 +21,10 @@
 	<key>NSCameraUsageDescription</key>
 	<string>Take two photos to complete a recycling scan. Demo keeps them on your phone. In Actual mode, Send for review sends the two photos to Google Gemini, directly or through your chosen review server.</string>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>Connect to your EcoGotchi review server on the same Wi-Fi for a local demo.</string>
+	<string>Connect to your Recycli review server on the same Wi-Fi for a local demo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Find nearby recycling bins and drop-off centers. Only an approximate search area is sent to the recycling map service when you choose Use my location.</string>
-	<key>EcoGotchiLocalServerURL</key>
+	<key>RecycliLocalServerURL</key>
 	<string>http://[2607:fb91:1a90:406d:8ec:e76d:8af7:d56e]:8787</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
