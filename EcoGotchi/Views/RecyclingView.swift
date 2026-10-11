@@ -19,6 +19,9 @@ struct RecyclingView: View {
     @State private var completedPreview = false
     @State private var completedDemo = false
     @State private var scannedStep: RecyclingCaptureStep?
+    @State private var scanningStep: RecyclingCaptureStep?
+    @State private var scanningPhoto: UIImage?
+    @State private var scanProgress = 0.0
     @State private var flashOpacity = 0.0
     @State private var error: String?
     @State private var checking = false
@@ -31,12 +34,13 @@ struct RecyclingView: View {
     @State private var reviewTask: Task<Void, Never>?
     @State private var timerTask: Task<Void, Never>?
     @State private var scanTask: Task<Void, Never>?
+    @State private var captureScanTask: Task<Void, Never>?
 
     private var hasResult: Bool { result != nil || completedPreview || completedDemo }
     private var sampleMode: Bool { store.isDeveloperMode && useSamplePhotos }
     private var autoAccept: Bool { store.isDemoRecycling || store.isDeveloperMode }
     private var canCapture: Bool { autoAccept || configured }
-    private var captureBusy: Bool { camera.capturing || countdown > 0 || scannedStep != nil }
+    private var captureBusy: Bool { camera.capturing || countdown > 0 || scannedStep != nil || scanningStep != nil }
 
     var body: some View {
         NavigationStack {
@@ -175,6 +179,13 @@ struct RecyclingView: View {
                             .foregroundStyle(.white).padding(24).background(.black.opacity(0.55), in: Circle())
                             .accessibilityLabel("Capturing in \(countdown) seconds")
                     }
+                    if let scanningStep, let scanningPhoto {
+                        GeometryReader { photo in
+                            Image(uiImage: scanningPhoto).resizable().scaledToFill()
+                                .frame(width: photo.size.width, height: photo.size.height).clipped()
+                        }
+                        ScanInProgressOverlay(step: scanningStep, progress: scanProgress, simulated: autoAccept)
+                    }
                 }.frame(height: 300).clipShape(PixelFrame())
                 if step == .disposal && !sampleMode {
                     Toggle("3-second shutter timer", isOn: $useTimer)
@@ -196,7 +207,7 @@ struct RecyclingView: View {
         VStack(alignment: .leading, spacing: 16) {
             progress
             Text(autoAccept ? "All 3 photos captured!" : "Ready for one review").font(.title2.bold())
-            Text(autoAccept ? "Your demo scan is complete. Collect your leaves and watch the grove recover." : "Check that the bin is clear and the last photo shows the item entering it. Any sorting icons or nearby signs should be visible. Tap a photo to look closer.")
+            Text(autoAccept ? "Your demo scan is complete. Collect your leaves and watch the habitat recover." : "Check that the bin is clear and the last photo shows the item entering it. Any sorting icons or nearby signs should be visible. Tap a photo to look closer.")
                 .font(.subheadline).foregroundStyle(.secondary)
             HStack(alignment: .top, spacing: 10) {
                 ForEach(draft.frames, id: \.step) { frame in
@@ -252,6 +263,7 @@ struct RecyclingView: View {
 
     private var captureButtonTitle: String {
         if countdown > 0 { return "Capturing in \(countdown)…" }
+        if scanningStep != nil { return autoAccept ? "Scanning…" : "Preparing photo…" }
         if scannedStep != nil { return "Scan complete!" }
         if camera.capturing { return "Capturing…" }
         if camera.starting { return "Opening camera…" }
@@ -272,7 +284,7 @@ struct RecyclingView: View {
 
     private var reviewResult: some View {
         VStack(alignment: .leading, spacing: 18) {
-            PixelSprite(sprite: earnedLeaves > 0 ? .fern : .pip, size: 100)
+            PixelSprite(sprite: GameSprite(rawValue: store.state.habitat.starterID) ?? .pip, size: 100)
                 .frame(maxWidth: .infinity).padding(.top, 16)
             Text(resultTitle).font(.title2.bold())
             if let result { Text("\(result.itemName) · \(result.material.rawValue.capitalized)").font(.headline) }
@@ -347,6 +359,11 @@ struct RecyclingView: View {
     private func cancelTimer() { timerTask?.cancel(); timerTask = nil; countdown = 0 }
 
     private func cancelScanFeedback() {
+        captureScanTask?.cancel()
+        captureScanTask = nil
+        scanningStep = nil
+        scanningPhoto = nil
+        scanProgress = 0
         scanTask?.cancel()
         scanTask = nil
         scannedStep = nil
@@ -397,11 +414,31 @@ struct RecyclingView: View {
         guard let jpeg = resized.jpegData(compressionQuality: 0.7) else {
             error = "That photo couldn’t be prepared. Try again."; return
         }
-        do {
-            try draft.capture(jpeg: jpeg, at: date, allowRepeatedImages: autoAccept)
-            if draft.isComplete { camera.stop() }
-            celebrateCapture(step)
-        } catch { self.error = error.localizedDescription }
+        scanningStep = step
+        scanningPhoto = resized
+        scanProgress = 0
+        captureScanTask = Task { @MainActor in
+            do {
+                // A short presentation effect; demo mode does not classify the image.
+                for frame in 1...24 {
+                    try await Task.sleep(for: .milliseconds(55))
+                    withAnimation(reduceMotion ? nil : .linear(duration: 0.055)) {
+                        scanProgress = Double(frame) / 24
+                    }
+                }
+                try Task.checkCancellation()
+                try draft.capture(jpeg: jpeg, at: date, allowRepeatedImages: autoAccept)
+                scanningStep = nil
+                scanningPhoto = nil
+                if draft.isComplete { camera.stop() }
+                celebrateCapture(step)
+            } catch is CancellationError { }
+            catch {
+                scanningStep = nil
+                scanningPhoto = nil
+                self.error = error.localizedDescription
+            }
+        }
     }
 
     private func sampleImage(for step: RecyclingCaptureStep) -> UIImage? {

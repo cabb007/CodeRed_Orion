@@ -22,6 +22,8 @@
 	<string>Take three photos to complete a recycling scan. Demo mode keeps photos on your phone and accepts them automatically. In AI review mode, only Send for review uploads the three photos to your EcoGotchi server and Google Gemini.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Connect to your EcoGotchi review server on the same Wi-Fi for a local demo.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Find nearby recycling bins and drop-off centers. Only an approximate search area is sent to the recycling map service when you choose Use my location.</string>
 	<key>EcoGotchiLocalServerURL</key>
 	<string>http://[2607:fb91:1a90:406d:8ec:e76d:8af7:d56e]:8787</string>
 	<key>NSAppTransportSecurity</key>

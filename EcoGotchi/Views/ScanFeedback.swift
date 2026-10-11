@@ -2,6 +2,79 @@ import SwiftUI
 import AVFoundation
 import Combine
 
+struct ScanInProgressOverlay: View {
+    let step: RecyclingCaptureStep
+    let progress: Double
+    let simulated: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    private var title: String {
+        guard simulated else { return "Preparing photo…" }
+        switch step {
+        case .bin: return "Scanning bin…"
+        case .item: return "Scanning item…"
+        case .disposal: return "Scanning disposal…"
+        }
+    }
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack {
+                Color.black.opacity(0.30)
+                ScanBrackets().stroke(Palette.sage, style: StrokeStyle(lineWidth: 3, lineCap: .square))
+                    .padding(22)
+                if !reduceMotion {
+                    Rectangle()
+                        .fill(LinearGradient(colors: [.clear, Palette.sage.opacity(0.5)], startPoint: .top, endPoint: .bottom))
+                        .frame(width: max(0, geo.size.width - 48), height: 42)
+                        .overlay(alignment: .bottom) {
+                            Rectangle().fill(Palette.sage).frame(height: 3)
+                                .shadow(color: Palette.sage, radius: 8)
+                        }
+                        .position(x: geo.size.width / 2, y: 32 + max(0, geo.size.height - 106) * progress)
+                }
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "viewfinder")
+                        Text(simulated ? "DEMO SCAN" : "PHOTO CAPTURE").tracking(1)
+                        Spacer()
+                    }.font(.system(size: 10, weight: .bold, design: .monospaced))
+                    Spacer()
+                    HStack {
+                        Text(title).font(.system(.subheadline, design: .monospaced, weight: .bold))
+                        Spacer()
+                        Text("\(Int(progress * 100))%").font(.caption.monospacedDigit().bold())
+                    }
+                    GeometryReader { bar in
+                        ZStack(alignment: .leading) {
+                            Rectangle().fill(.white.opacity(0.2))
+                            Rectangle().fill(Palette.sage).frame(width: bar.size.width * progress)
+                        }
+                    }.frame(height: 5)
+                }.padding(34).foregroundStyle(.white)
+            }
+        }.allowsHitTesting(false)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(simulated ? "Demo scan in progress" : "Preparing captured photo")
+    }
+}
+
+private struct ScanBrackets: Shape {
+    func path(in rect: CGRect) -> Path {
+        let length: CGFloat = 22
+        var path = Path()
+        for (x, y, directionX, directionY) in [
+            (rect.minX, rect.minY, 1.0, 1.0), (rect.maxX, rect.minY, -1.0, 1.0),
+            (rect.minX, rect.maxY, 1.0, -1.0), (rect.maxX, rect.maxY, -1.0, -1.0)
+        ] {
+            path.move(to: CGPoint(x: x + directionX * length, y: y))
+            path.addLine(to: CGPoint(x: x, y: y))
+            path.addLine(to: CGPoint(x: x, y: y + directionY * length))
+        }
+        return path
+    }
+}
+
 @MainActor
 final class ScanFeedback: ObservableObject {
     private var players: [RecyclingCaptureStep: AVAudioPlayer] = [:]

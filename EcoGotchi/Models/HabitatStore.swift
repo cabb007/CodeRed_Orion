@@ -5,6 +5,7 @@ import Combine
 final class HabitatStore: ObservableObject {
     @Published private var session: HabitatSession
     @Published var developer = DeveloperOptions()
+    @Published private(set) var selectedFoodID: String?
     @Published var recyclingMode: RecyclingMode {
         didSet { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") }
     }
@@ -14,6 +15,9 @@ final class HabitatStore: ObservableObject {
     var state: HabitatState { session.state }
     var isDeveloperMode: Bool { session.isDeveloperMode }
     var isDemoRecycling: Bool { recyclingMode == .demo }
+    var selectedFood: PetFood? {
+        PetFood.all.first { $0.id == selectedFoodID && $0.habitats.contains(state.habitat) && state.foodCount($0.id) > 0 }
+    }
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -69,17 +73,72 @@ final class HabitatStore: ObservableObject {
 
     func buy(_ decoration: Decoration) { session.state.purchase(decoration); save() }
 
+    func selectHabitat(_ habitat: HabitatKind) {
+        refresh()
+        session.state.selectHabitat(habitat)
+        selectedFoodID = nil
+        refresh()
+        save()
+    }
+
+    @discardableResult
+    func buyFood(_ id: String) -> Bool {
+        guard session.state.buyFood(id) else { return false }
+        save()
+        return true
+    }
+
+    func selectFood(_ id: String?) {
+        selectedFoodID = id.flatMap { candidate in
+            state.habitat.foods.contains(where: { $0.id == candidate }) && state.foodCount(candidate) > 0 ? candidate : nil
+        }
+    }
+
+    @discardableResult
+    func feedPet(_ id: String) -> Bool {
+        let includeSheltering = isDeveloperMode && developer.ignoreRetreat
+        guard let food = selectedFood, session.state.feed(id, foodID: food.id, includeSheltering: includeSheltering) else { return false }
+        if state.foodCount(food.id) == 0 { selectedFoodID = nil }
+        save()
+        return true
+    }
+
+    func stockPreviewFood() {
+        guard isDeveloperMode else { return }
+        if session.state.foodInventory == nil { session.state.foodInventory = [:] }
+        for food in PetFood.all { session.state.foodInventory?[food.id] = 5 }
+    }
+
+    func setPreviewFoodCount(_ id: String, count: Int) {
+        guard isDeveloperMode, PetFood.all.contains(where: { $0.id == id }) else { return }
+        if session.state.foodInventory == nil { session.state.foodInventory = [:] }
+        session.state.foodInventory?[id] = min(99, max(0, count))
+        if count <= 0 && selectedFoodID == id { selectedFoodID = nil }
+    }
+
+    func moveDecoration(_ id: String, x: Double, y: Double) {
+        if session.state.moveDecoration(id, x: x, y: y) { save() }
+    }
+
+    func setDecorationLocked(_ id: String, locked: Bool) {
+        if session.state.setDecorationLocked(id, locked: locked) { save() }
+    }
+
+    func resetDecorationLayout() { session.state.resetDecorationLayout(); save() }
+
     func beginDeveloperMode() {
         guard !isDeveloperMode else { return }
         refresh()
         session.beginPreview()
         session.state.lastPollution = Date()
         developer = DeveloperOptions()
+        selectedFoodID = nil
     }
 
     func endDeveloperMode() {
         session.endPreview()
         developer = DeveloperOptions()
+        selectedFoodID = nil
         refresh()
     }
 
@@ -97,11 +156,17 @@ final class HabitatStore: ObservableObject {
     func setActionCount(_ count: Int) {
         guard isDeveloperMode else { return }
         let target = max(0, min(30, count))
-        if target < state.actions.count {
-            session.state.actions = Array(state.actions.prefix(target))
+        if target < state.habitatActionCount {
+            var kept = 0
+            let current = state.habitat.rawValue
+            session.state.actions = state.actions.filter { action in
+                guard (action.habitatID ?? "grove") == current else { return true }
+                kept += 1
+                return kept <= target
+            }
         } else {
-            while state.actions.count < target {
-                session.state.actions.append(.init(id: UUID(), date: Date(), item: "[Preview] Recycling action"))
+            while state.habitatActionCount < target {
+                session.state.actions.append(.init(id: UUID(), date: Date(), item: "[Preview] Recycling action", habitatID: state.habitat.rawValue))
             }
         }
     }
@@ -134,6 +199,7 @@ final class HabitatStore: ObservableObject {
         guard isDeveloperMode else { return }
         session.state = HabitatState()
         developer = DeveloperOptions()
+        selectedFoodID = nil
     }
 
     func unlockPreview() {
@@ -141,6 +207,7 @@ final class HabitatStore: ObservableObject {
         setActionCount(6)
         setPoints(200)
         setLitter(0)
+        stockPreviewFood()
     }
 
     private func save() {
