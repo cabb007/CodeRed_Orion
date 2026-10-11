@@ -113,7 +113,10 @@ struct RecyclingMapView: View {
                     Image(systemName: "scope").font(.title2).foregroundStyle(.blue)
                         .padding(5).background(.white, in: Circle()).accessibilityLabel("Center of searched area")
                 }
-                ForEach(bins.saved) { entry in
+                ForEach(bins.saved.filter { entry in
+                    (entry.shared == nil || entry.server != VerificationConnection.savedURL) &&
+                        area.center.distance(to:entry.draft.coordinate) <= Double(area.radius)
+                }) { entry in
                     Marker(entry.draft.name,coordinate:coordinate(entry.draft.coordinate)).tint(.blue)
                 }
                 ForEach(bins.nearby(area,origin:VerificationConnection.savedURL)) { bin in

@@ -3,8 +3,9 @@ import SwiftUI
 struct VerificationSettingsView: View {
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.dismiss) private var dismiss
-    @State private var address = VerificationConnection.savedURL
-    @State private var token = VerificationConnection.savedToken
+    @State private var modeID: UUID?
+    @State private var address = ""
+    @State private var token = ""
     @State private var error: String?
     @State private var connectionMessage: String?
     @State private var testing = false
@@ -52,6 +53,7 @@ struct VerificationSettingsView: View {
                                     let connection = try VerificationConnection(address: address, token: token)
                                     let result = try await connection.testConnection()
                                     try Task.checkCancellation()
+                                    guard modeID == store.modeSessionID, !store.isDeveloperMode else { return }
                                     try connection.save()
                                     connectionMessage = result.reviewsRemaining > 0
                                         ? "Connected and saved. Your server has \(result.reviewsRemaining) AI reviews left in its daily budget. Tap Done to continue."
@@ -84,6 +86,13 @@ struct VerificationSettingsView: View {
             .navigationTitle("Scan settings").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }.tint(Palette.forest)
+            .task {
+                guard !store.isDeveloperMode else { dismiss(); return }
+                modeID = store.modeSessionID
+                address = VerificationConnection.savedURL
+                token = VerificationConnection.savedToken
+            }
+            .onChange(of:store.modeSessionID) { _,_ in connectionTask?.cancel(); token = ""; dismiss() }
             .onChange(of: address) { _, _ in connectionMessage = nil; error = nil }
             .onChange(of: token) { _, _ in connectionMessage = nil; error = nil }
             .onDisappear { connectionTask?.cancel() }

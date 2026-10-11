@@ -31,6 +31,7 @@ struct InteractivePet: View {
     private var lifted: Bool { dragOrigin != nil }
     private var bounds: CGRect { PetMotion.bounds(in: playground, size: size, groundY: home.y) }
     private var center: CGPoint {
+        if lifted, let currentBody { return currentBody.position }
         let origin = dragOrigin ?? currentBody?.position ?? CGPoint(x: home.x, y: bounds.maxY)
         return CGPoint(x: min(bounds.maxX, max(bounds.minX, origin.x + (lifted ? translation.width : 0))),
                        y: min(bounds.maxY, max(bounds.minY, origin.y + (lifted ? translation.height : 0))))

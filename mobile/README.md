@@ -18,12 +18,61 @@ React Native / Expo SDK 57 port of the Swift prototype. The app includes Willow 
 
 Both apps use the optional Node.js server in `server/`, with built-in SQLite for review receipts and community bin landmarks, and Google Gemini for photo review. The Gemini API key stays on the server. Demo recycling works without a server; community sharing works without Gemini. These are separate app implementations and do not share local saves. Android and browser support come from the React Native app.
 
+## Phone compatibility and framework choice
+
+| Phone or preview | React Native / Expo (`mobile/`) | Swift / SwiftUI (`EcoGotchi/`) |
+| --- | --- | --- |
+| iPhone | Supported through a compatible Expo Go app or a signed native build | Supported on iOS 17+; install using macOS and Xcode |
+| Android phone | Supported through a compatible Expo Go app or an Android build | Not supported; use the React Native app |
+| Browser | Development preview with a location list; some native phone features differ or are unavailable | No browser app |
+| Simulator/emulator | Requires the relevant platform tools; iOS Simulator requires macOS | iPhone Simulator on macOS/Xcode; camera capture requires a physical iPhone |
+
+Windows can run the React Native development server for **both iPhone and Android**. Swift is the native **iPhone-only implementation** in this repository; it cannot be installed on Android or built locally from Windows. Use macOS/Xcode for Swift. The two implementations keep separate local saves.
+
+## Set up React Native on an iPhone
+
+1. Install Node.js 24 on your development computer (matching this repository's CI), and install Expo Go on your iPhone with support for this project's Expo SDK 57.
+2. Check out `flush-out-features`. In a terminal at the repository root, install the app dependencies and start the server:
+
+```powershell
+# Windows PowerShell, from the repository root
+cd .\mobile
+npm.cmd ci
+npx.cmd expo start --clear
+```
+
+On macOS/Linux, use `cd mobile`, `npm ci` and `npx expo start --clear` instead.
+
+3. Put the computer and iPhone on the same Wi-Fi. Scan the terminal QR code with the iPhone Camera app and open it in Expo Go. Keep the development server running.
+4. Allow camera access when recycling or adding a landmark, and allow foreground location when you tap **Use my location**. Demo recycling needs no server or Gemini key.
+
+If LAN access fails, stop Expo and run `npx.cmd expo start --tunnel --clear` on Windows, or `npx expo start --tunnel --clear` on macOS/Linux. If Expo asks for login, use `npx.cmd expo login` (or `npx expo login`) and sign into Expo Go with the same account. Expo Go is a development host; a standalone iPhone app requires an iOS build and Apple signing.
+
+## Set up React Native on an Android phone
+
+1. Install Node.js 24 on the computer and a compatible Expo Go app on the Android phone.
+2. From the checked-out repository root, run the same `cd mobile` → `npm ci` → `npx expo start --clear` sequence above. In Windows PowerShell, use `npm.cmd` and `npx.cmd`.
+3. Connect both devices to the same Wi-Fi. Open Expo Go on Android and use its QR scanner to scan the terminal QR code. Keep the server running.
+4. Grant camera and foreground-location permissions when their features request them. Use the tunnel command above if the phone cannot reach the computer over LAN.
+
+Expo Go supplies the development map modules. A standalone Android build needs a Maps SDK for Android key through `GOOGLE_MAPS_ANDROID_API_KEY`, with the correct package/signing restrictions, plus Android build/signing configuration. See [native configuration](#native-configuration). The Swift app cannot be used on this phone.
+
+## Set up Swift on an iPhone
+
+1. Use a Mac with Xcode 16 or newer. Check out `flush-out-features` and open `EcoGotchi.xcodeproj` from the repository root. Swift setup does not use npm, Expo Go or the `mobile/` folder.
+2. Select the **EcoGotchi** scheme. Connect your iPhone to the Mac, unlock it and trust the computer when prompted.
+3. In **Signing & Capabilities**, choose your Apple development team and a unique bundle identifier if needed. Select the connected iPhone as the run destination, enable Developer Mode on the phone if prompted, and click **Run**.
+4. Use an iPhone running **iOS 17 or newer**. Grant Camera, Location or Local Network access when requested for the features you use. Demo recycling works offline; AI review and community sharing need the optional server connection.
+
+For a simulator, choose an iPhone Simulator in Xcode and Run. The simulator does not provide a rear camera: open **Dev**, turn **Dev Mode** on, then choose **Tools → Guided capture demo**. Physical camera captures, permission behavior, sound/haptics and live map/sharing flows still require device testing. Android phones should use React Native.
+
 ## Run on your phone from Windows
 
 Install Node.js and a version of **Expo Go** that supports SDK 57 on your iPhone or Android phone. Start inside **mobile**, where package.json lives:
 
 ```powershell
-cd C:\Users\cjwir\OneDrive\Documents\GitHub\CodeRed_Orion\mobile
+# From the cloned repository root
+cd .\mobile
 npm.cmd ci
 npx.cmd expo start --clear
 ```
