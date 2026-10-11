@@ -4,9 +4,35 @@
 
 A pocket wilderness that grows through real-world environmental care. This repository contains a React Native / Expo app for iOS and Android, plus the original native SwiftUI iPhone prototype for the CodeRED environment track.
 
+## Application stacks
+
+| Layer | React Native app (`mobile/`) | Native iOS app (`EcoGotchi/`) |
+| --- | --- | --- |
+| Language and UI | JavaScript, React 19.2.3, React Native 0.86.3, Expo SDK 57 | Swift, SwiftUI; Xcode project targets iOS 17+ and uses Swift 5 language mode |
+| Phone features | Expo Camera, Audio, Haptics, Location, Image Manipulator and FileSystem | AVFoundation camera/audio, UIKit images and haptics, CoreLocation |
+| Maps | react-native-maps: Apple Maps on iOS, Google Maps on Android; list/OSM link on web | MapKit and Apple Maps |
+| State and saves | React context/hooks, AsyncStorage, serialized repositories, native files for landmark photos | Combine ObservableObject, Codable, UserDefaults for gameplay, atomic Application Support file for landmarks |
+| Credentials and requests | Expo SecureStore; authenticated fetch requests | Security/Keychain; URLSession with redirects blocked |
+| Artwork and motion | React Native animation/gesture views and bundled pixel atlases | SwiftUI gestures, Canvas/TimelineView, shared pet physics/collision world and asset catalogs |
+| Checks | Node test runner, ESLint, Expo exports | Standalone Swift checks and an iOS Simulator build in macOS CI |
+
+Both apps use the optional Node.js server in `server/`, with built-in SQLite for review receipts and community bin landmarks, and Google Gemini for photo review. The Gemini API key stays on the server. Demo recycling works without a server; community sharing works without Gemini. These are separate app implementations and do not share local saves. Android and browser support come from the React Native app.
+
 ## Run from Windows with React Native
 
 The `mobile/` folder contains the React Native / Expo app. Run it from Windows on an iPhone or Android phone through a compatible Expo Go app. Demo mode needs no server. See [mobile setup and features](mobile/README.md) for installation, login, QR-code, tunnel, native-map configuration, optional AI review, and validation instructions. Run Expo from `mobile/`, where its `package.json` lives.
+
+Install project dependencies before starting Expo. From the repository root:
+
+```powershell
+cd .\mobile
+npm.cmd ci
+npx.cmd expo start --clear
+```
+
+On later runs, start Expo from `mobile/`; repeat `npm.cmd ci` after pulling dependency or lockfile changes. The committed lockfile keeps Expo and React Native versions compatible.
+
+If Expo says **"Cannot determine the project's Expo SDK version because the module expo is not installed"**, run `npm.cmd ci` in `mobile/` and then start Expo again. Accepting an `npx` prompt to download Expo installs a temporary CLI; it does not install this app's dependencies. If installation fails, resolve that npm error before retrying Expo.
 
 The current React Native app includes:
 
@@ -18,11 +44,11 @@ The current React Native app includes:
 - **Recycle confirmation:** the main button says **RECYCLE**. Completing a saved demo scan displays **+20 leaves added to your total leaf points** and the updated total. AI reviews show their actual reward, and Dev Mode rewards are temporary.
 - **Buy Leaves display:** Shop shows 100, 500 and 1,200 leaf packs first. A smaller note below them explains the plan to direct 80% of future purchases to preservation, conservation and wildlife reserve organizations. Buy buttons show a coming-soon message; no checkout, payment, purchased-leaf grant or donation transfer exists.
 
-Random weather, an account-backed leaderboard, XP/tier progression, real payments and donation fulfillment remain roadmap work. These React Native additions do not automatically modify the SwiftUI app.
+Random weather, an account-backed leaderboard, XP/tier progression, real payments and donation fulfillment remain roadmap work. This branch also ports the implemented React Native features into the SwiftUI app; see [native parity notes](NATIVE_PARITY.md).
 
 The mobile suite currently has **63 tests**. See [mobile validation](mobile/README.md#validation) for commands and device-testing limits.
 
-The remaining sections describe the original SwiftUI prototype and its server.
+The remaining sections describe the native SwiftUI app and its server.
 
 ## Run the SwiftUI prototype on iPhone or simulator
 
@@ -34,37 +60,32 @@ The remaining sections describe the original SwiftUI prototype and its server.
 
 Tap **Recycle → gear** to turn scan sounds off or switch from **Demo** to **AI review**. Sounds respect Silent Mode; flash and particles respect Reduce Motion. For optional Gemini review, follow [server setup](server/README.md). A physical iPhone is required for camera capture; use **Dev → Tools → Guided capture demo** on the simulator.
 
-## SwiftUI prototype features
+## SwiftUI features
 
-- One full-screen portrait habitat with a bottom-center camera button; no tabs or scrolling dashboard.
-- Friends and Decorate have labeled buttons beside the bottom-center Recycle button.
-- Journal and Dev have direct shortcuts at the top; tapping the leaves balance also opens Decorate.
-- Friends uses a compact collection grid; Decorate shows three item rows; Journal shows a short action list. Each panel has one title and a large close button.
-- Four pollution states: Thriving (0 litter), Littered (1–2), Tarnished (3–4), Polluted (5–6).
-- Matching portrait artwork changes the grass, foliage, water, and sky as the habitat deteriorates or recovers.
-- Original Pip, Fern, Clover, and Maple sprites, matching decorations and litter, and a Pip app icon.
-- Retro stepped panels, pixel lettering, a segmented health meter, and gentle stepped animal movement.
-- One new piece of litter every four hours, capped at six, including time away.
-- One guided camera session: capture the bin (written label optional), then the item, then disposal into that same bin. The camera stays open between steps; an optional three-second shutter timer helps with the last photo.
-- Demo automatically accepts all three captures and awards a fixed 20 leaves locally. In optional AI mode, inspect the three selected photos, then send them together in one Gemini request. The live preview stays on the phone; there is no continuous video upload. Gemini identifies the material, assesses visible evidence, and gives a sorting tip.
-- A configurable server-wide limit defaults to 30 AI attempts per rolling 24 hours, including failures and rejected reviews. Gemini uses low thinking and a 2,048-token combined thought/answer cap; incomplete responses earn zero.
-- In AI mode, only approved reviews clear one piece of virtual litter and earn material-based leaves: aluminum 30, steel 25, plastic/glass 20, cardboard 15, paper 10. Unclear/rejected reviews earn zero.
-- The server prevents exact photo reuse and returns the same receipt on retry; saved receipt IDs prevent duplicate awards after relaunch.
-- Pip starts in the habitat; Fern, Clover, and Maple unlock at 1, 3, and 6 actions.
-- Animals retreat at low habitat health without being removed from the collection.
-- Earned leaves buy wildflowers, mushrooms, and a little hideaway.
-- Progress, labeled demo rewards, AI-reviewed rewards, materials, and sorting tips persist locally between launches. Older self-reported entries remain clearly labeled.
-- VoiceOver descriptions for the habitat and reduced-motion support.
+- Willow Grove, Coral Cove and Snow Glade, each with four pets unlocked at 0, 1, 3 and 6 recycling actions in that habitat.
+- Shared leaves and journal, with separate habitat pollution and unlocks. Existing Swift saves remain readable.
+- Petting, feeding, drag/flick, gravity, bounce and roaming; a shared collision world supports at most four residents. Condition-dependent facial sprites and species-inspired drop speech bubbles match React Native.
+- Four food types and twelve decorations. Positions and locks persist; reset affects the current habitat.
+- Habitat-specific leaves/fireflies, reef bubbles/kelp and snow/wind, pollution artwork and cleanup effects. Motion pauses behind panels and in the background, and respects Reduce Motion.
+- A native MapKit bin finder with foreground location, explicit city/ZIP searches, 5/10/25 km radii, OpenStreetMap and Houston public data, cache/fallback, attribution and Apple Maps directions.
+- Photo bin landmarks saved on the phone, precise pin placement, optional explicit community sharing, photos and removal of owned landmarks. Landmarks never earn leaves.
+- Bin → item → disposal capture, frozen scan progress, timer, success effects, sound and haptics. Saved rewards report the actual added leaves and updated total.
+- Shop → Buy Leaves displays 100, 500 and 1,200 leaf packs, coming-soon buttons and a smaller note about the future 80% donation plan. Payments and donations are not implemented.
+- An explicit Dev Mode switch copies gameplay and settings temporarily. Turning it off restores saved progress; old-mode callbacks cannot award progress.
+- Demo scans earn 20 leaves and clear one litter item without a server. Optional approved AI reviews earn material-based leaves: aluminum 30, steel 25, plastic/glass 20, cardboard 15, paper 10.
+- Receipt/submission deduplication across habitats, labeled journal entries, four-hour pollution, VoiceOver and Reduce Motion.
+
+See [native parity notes](NATIVE_PARITY.md) for implementation details and device checks.
 
 ## SwiftUI demo walkthrough
 
-Press Run in Xcode and tap the bottom-center **Recycle** button. The default **Demo** mode opens the camera without any connection setup. Take **Your bin → Your item → Disposal** photos. Each capture shows “Successfully scanned bin”, “Successfully scanned item”, or “Successfully scanned disposal”, with a retro chime and pixel celebration. The final step has an optional three-second timer. After its celebration, 20 leaves are added automatically and one piece of habitat litter disappears. Return to your habitat to meet Fern. Complete a second scan to afford wildflowers in **Decorate**. Demo accepts all captured images without classifying their contents; no photos are uploaded or saved to the photo library.
+Press Run in Xcode and tap the bottom-center **Recycle** button. The default **Demo** mode opens the camera without any connection setup. Take **Your bin → Your item → Disposal** photos. Each capture shows “Successfully scanned bin”, “Successfully scanned item”, or “Successfully scanned disposal”, with a retro chime and pixel celebration. The final step has an optional three-second timer. After its celebration, 20 leaves are added automatically and one piece of habitat litter disappears. Return to your habitat to meet Fern. Complete a second scan to afford wildflowers in **Shop → Decorations**. Demo accepts all captured images without classifying their contents; no photos are uploaded or saved to the photo library.
 
 The gear opens **Scan settings**, including the sound switch and optional **AI review** mode. AI mode preserves the bin evidence and reward rules documented in [server setup](server/README.md). It does not silently fall back to demo rewards. If an unfinished camera session is interrupted, start the three captures again. Completed captures can finish after returning to the app; duplicate completion cannot award the same scan twice.
 
 ## SwiftUI developer mode
 
-Tap **Dev** at the top of the habitat. Its button turns yellow while preview mode is active. The **×** closes the panel while keeping the preview running. **Exit preview** at the top restores the original game, including normal elapsed-time pollution. Controls are grouped into Habitat, Friends, Rewards, and Tools.
+Tap **Dev** at the top of the habitat, then turn the **Dev Mode** switch on. Opening the panel alone does not enable it. Its button turns yellow while preview mode is active. Closing the panel keeps the temporary copy active; turning the switch off restores saved gameplay, recycling mode and scan sounds, including normal elapsed-time pollution. Controls are grouped into Habitat, Friends, Rewards, and Tools.
 
 The preview uses a temporary copy of the habitat. Test purchases and actions never overwrite the saved game, even if you close and relaunch the app mid-preview. Developer options reset when you exit. No special build setting is needed in this hackathon prototype.
 
@@ -82,7 +103,7 @@ Available controls:
 
 Demo scans are automatically accepted for gameplay and are not AI-verified. In optional AI mode, Gemini reviews visible photo evidence, **not proof of real disposal or downstream recycling**. Photos are uploaded only on submission, held in memory by the app/server, and discarded after processing or when the challenge closes. The server retains review results and image fingerprints; Google’s own data terms apply. Exact-duplicate checks and limits reduce casual reuse but do not defeat edited photos, staged actions, or modified clients. This remains a private hackathon prototype, with no cash-value rewards. See [server documentation](server/README.md) for privacy, retry behavior, limits, and setup. Game health and reward weights are fictional, not environmental-impact estimates.
 
-The React Native app has a display-only Buy Leaves section. Real-money leaf purchases and donations remain a future concept; there is no payment processing or donation integration. The custom habitat, character atlas, and app icon are bundled locally; no artwork is fetched at runtime.
+Both apps have a display-only Buy Leaves section. Real-money leaf purchases and donations remain a future concept; there is no payment processing or donation integration. The custom habitat, character atlas, and app icon are bundled locally; no artwork is fetched at runtime.
 
 ## Custom art
 

@@ -3,12 +3,15 @@ import Combine
 
 struct ContentView: View {
     @EnvironmentObject private var store: HabitatStore
+    @StateObject private var recyclingFinder = RecyclingFinder()
     @State private var panel: HabitatPanel?
+    @State private var shopSection = ShopSection.food
     private let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
         ZStack {
-            HabitatScene(state: store.state, options: store.developer)
+            HabitatScene(state: store.state, options: store.developer, sceneActive: panel == nil)
+                .id("\(store.state.habitat.rawValue)-\(store.modeSessionID)")
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
@@ -27,11 +30,13 @@ struct ContentView: View {
             case .camera:
                 RecyclingView(launchCameraOnOpen: true)
             case .friends:
-                HabitatOverlay(title: "Friends", subtitle: "Your woodland crew") { CollectionView() }
+                HabitatOverlay(title: "Friends", subtitle: store.state.habitat.title) { CollectionView() }
             case .shop:
-                HabitatOverlay(title: "Decorate", subtitle: "Make the grove your own") { ShopView() }
+                HabitatOverlay(title: "Shop", subtitle: "Treats, treasures & new places") { ShopView(section: shopSection) }
             case .journal:
                 HabitatOverlay(title: "Journal", subtitle: "Your little acts of care") { ActivityView() }
+            case .bins:
+                RecyclingMapView(finder: recyclingFinder)
             case .developer:
                 DeveloperPanel()
             }
@@ -41,20 +46,20 @@ struct ContentView: View {
 
     private var topBar: some View {
         HStack(alignment: .center, spacing: 10) {
-            Button { panel = .shop } label: {
+            Button { openShop() } label: {
                 HStack(spacing: 6) {
                     PixelSprite(sprite: .leaf, size: 24)
                     Text("\(store.state.points)").font(.system(.subheadline, design: .monospaced, weight: .heavy))
                 }.padding(.horizontal, 12).frame(minHeight: 52)
                     .pixelPanel(Palette.paper.opacity(0.96), shadow: false)
             }.buttonStyle(.plain)
-                .accessibilityLabel("\(store.state.points) leaves. Open decorations")
+                .accessibilityLabel("\(store.state.points) leaves. Open shop")
 
             Spacer(minLength: 0)
+            shortcut("Find a bin", symbol: "map.fill") { panel = .bins }
             shortcut("Journal", symbol: "book.closed.fill") { panel = .journal }
             shortcut(store.isDeveloperMode ? "Dev: on" : "Dev", symbol: "slider.horizontal.3",
                      highlighted: store.isDeveloperMode) {
-                store.beginDeveloperMode()
                 panel = .developer
             }
         }
@@ -65,7 +70,10 @@ struct ContentView: View {
             VStack(spacing: 4) {
                 Image(systemName: symbol).font(.system(size: 18, weight: .semibold))
                 Text(title).font(.system(size: 10, weight: .bold))
-            }.frame(minWidth: 60, minHeight: 52)
+                    .lineLimit(1).minimumScaleFactor(0.8)
+            }
+                .padding(.horizontal, 10)
+                .frame(minWidth: 60, minHeight: 52)
                 .pixelPanel(highlighted ? Palette.gold : Palette.paper.opacity(0.96), shadow: false)
         }.buttonStyle(.plain)
             .accessibilityLabel(title == "Dev" || highlighted ? "Developer controls" : title)
@@ -73,7 +81,12 @@ struct ContentView: View {
 
     private var status: some View {
         VStack(spacing: 8) {
-            Text("WILLOW GROVE").font(.system(size: 12, weight: .heavy, design: .monospaced)).tracking(2)
+            Button { openShop(.habitats) } label: {
+                HStack(spacing: 6) {
+                    Text(store.state.habitat.title.uppercased()).tracking(1)
+                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
+                }.font(.system(size: 12, weight: .heavy, design: .monospaced)).frame(minHeight: 32)
+            }.buttonStyle(.plain).accessibilityLabel("Change habitat. Current: \(store.state.habitat.title)")
             HStack(spacing: 7) {
                 Rectangle().fill(conditionColor).frame(width: 7, height: 7)
                 Text(store.state.condition.title.uppercased()).font(.system(size: 10, weight: .bold))
@@ -99,25 +112,43 @@ struct ContentView: View {
 
     private var actionDock: some View {
         VStack(spacing: 12) {
-            if store.isDeveloperMode {
+            if let food = store.selectedFood {
+                HStack(spacing: 8) {
+                    PixelSprite(sprite: GameSprite(rawValue: food.id) ?? .apple, size: 28)
+                    Text("Tap a pet to feed · \(store.state.foodCount(food.id)) left")
+                        .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    Button { store.selectFood(nil) } label: {
+                        Image(systemName: "xmark").font(.caption.bold()).frame(width: 44, height: 44)
+                    }.buttonStyle(.plain).accessibilityLabel("Stop feeding")
+                }.padding(.leading, 10).pixelPanel(Palette.paper, shadow: false)
+            } else if store.isDeveloperMode {
                 Text("Preview mode · changes are temporary")
                     .font(.caption2).padding(8)
                     .background(Palette.gold, in: PixelFrame())
+            } else {
+                Text("Tap to pet · drag to play")
+                    .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                    .padding(.horizontal, 10).padding(.vertical, 6)
+                    .background(Palette.paper.opacity(0.9), in: PixelFrame())
+                    .allowsHitTesting(false)
             }
             HStack(alignment: .center, spacing: 12) {
-                dockButton("Friends", sprite: .pip) { panel = .friends }
+                dockButton("Friends", sprite: GameSprite(rawValue: store.state.habitat.starterID) ?? .pip) { panel = .friends }
                 Button { panel = .camera } label: {
                     VStack(spacing: 6) {
                         Image(systemName: "camera.fill").font(.system(size: 29, weight: .bold))
                         Text("RECYCLE").font(.system(size: 11, weight: .heavy)).tracking(1)
-                        Text(store.isDeveloperMode ? "+\(store.developer.actionReward) preview" : (store.isDemoRecycling ? "Demo · +20 leaves" : "AI photo review"))
-                            .font(.system(size: 9, weight: .medium)).opacity(0.8)
                     }.frame(width: 76, height: 68)
                 }.buttonStyle(PixelButtonStyle())
                     .accessibilityLabel("Recycle. Open camera")
-                dockButton("Decorate", sprite: .flowers) { panel = .shop }
+                dockButton("Shop", sprite: .apple) { openShop() }
             }
         }.frame(maxWidth: .infinity)
+    }
+
+    private func openShop(_ section: ShopSection = .food) {
+        shopSection = section
+        panel = .shop
     }
 
     private func dockButton(_ title: String, sprite: GameSprite, action: @escaping () -> Void) -> some View {
@@ -133,7 +164,7 @@ struct ContentView: View {
 }
 
 private enum HabitatPanel: String, Identifiable {
-    case camera, friends, shop, journal, developer
+    case camera, friends, shop, journal, developer, bins
     var id: String { rawValue }
 }
 

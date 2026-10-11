@@ -1,0 +1,16 @@
+name: Swift checks
+on:
+  push:
+    branches: [flush-out-features]
+    paths: ['EcoGotchi/**', 'EcoGotchi.xcodeproj/**', 'Tests/**', 'scripts/check-swift.sh', '.github/workflows/swift-checks.yml']
+  pull_request:
+    paths: ['EcoGotchi/**', 'EcoGotchi.xcodeproj/**', 'Tests/**', 'scripts/check-swift.sh', '.github/workflows/swift-checks.yml']
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check gameplay, persistence, capture, maps and Dev Mode
+        run: bash scripts/check-swift.sh
+      - name: Build the iOS app for Simulator
+        run: xcodebuild -project EcoGotchi.xcodeproj -scheme EcoGotchi -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build

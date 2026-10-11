@@ -4,15 +4,42 @@
 
 React Native / Expo SDK 57 port of the Swift prototype. The app includes Willow Grove, Coral Cove, Snow Glade, interactive pets, food, movable decorations, habitat effects, recycling capture, and a recycling-location finder. Swift and the Node verification server remain separate.
 
+## Application stacks
+
+| Layer | React Native app (`mobile/`) | Native iOS app (`EcoGotchi/`) |
+| --- | --- | --- |
+| Language and UI | JavaScript, React 19.2.3, React Native 0.86.3, Expo SDK 57 | Swift, SwiftUI; Xcode project targets iOS 17+ and uses Swift 5 language mode |
+| Phone features | Expo Camera, Audio, Haptics, Location, Image Manipulator and FileSystem | AVFoundation camera/audio, UIKit images and haptics, CoreLocation |
+| Maps | react-native-maps: Apple Maps on iOS, Google Maps on Android; list/OSM link on web | MapKit and Apple Maps |
+| State and saves | React context/hooks, AsyncStorage, serialized repositories, native files for landmark photos | Combine ObservableObject, Codable, UserDefaults for gameplay, atomic Application Support file for landmarks |
+| Credentials and requests | Expo SecureStore; authenticated fetch requests | Security/Keychain; URLSession with redirects blocked |
+| Artwork and motion | React Native animation/gesture views and bundled pixel atlases | SwiftUI gestures, Canvas/TimelineView, shared pet physics/collision world and asset catalogs |
+| Checks | Node test runner, ESLint, Expo exports | Standalone Swift checks and an iOS Simulator build in macOS CI |
+
+Both apps use the optional Node.js server in `server/`, with built-in SQLite for review receipts and community bin landmarks, and Google Gemini for photo review. The Gemini API key stays on the server. Demo recycling works without a server; community sharing works without Gemini. These are separate app implementations and do not share local saves. Android and browser support come from the React Native app.
+
 ## Run on your phone from Windows
 
 Install Node.js and a version of **Expo Go** that supports SDK 57 on your iPhone or Android phone. Start inside **mobile**, where package.json lives:
 
 ```powershell
 cd C:\Users\cjwir\OneDrive\Documents\GitHub\CodeRed_Orion\mobile
-npm.cmd install
+npm.cmd ci
 npx.cmd expo start --clear
 ```
+
+Run the dependency-install command on first setup, before starting Expo. It installs every package from the committed lockfile, including Expo. Repeat it after pulling dependency or lockfile changes.
+
+### Troubleshooting: Expo is not installed
+
+If startup reports **"Cannot determine the project's Expo SDK version because the module expo is not installed"**, make sure you are inside `mobile/`, then run:
+
+```powershell
+npm.cmd ci
+npx.cmd expo start --clear
+```
+
+Accepting `npx`'s prompt to download Expo only downloads a temporary CLI. The project still needs its own dependencies. If `npm.cmd ci` fails, resolve that npm installation error before restarting Expo. You do not need a global Expo install or an npm update to fix this missing-module error.
 
 Connect the PC and phone to the same Wi-Fi. On iPhone, scan the terminal QR code with Camera; on Android, scan it with Expo Go. Keep the terminal running.
 

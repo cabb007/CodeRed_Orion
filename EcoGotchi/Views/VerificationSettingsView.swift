@@ -3,7 +3,6 @@ import SwiftUI
 struct VerificationSettingsView: View {
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("ecogotchi.scanSounds") private var scanSounds = true
     @State private var address = VerificationConnection.savedURL
     @State private var token = VerificationConnection.savedToken
     @State private var error: String?
@@ -22,7 +21,7 @@ struct VerificationSettingsView: View {
                          ? "Demo automatically accepts all three photos, adds 20 leaves, and clears one piece of habitat trash. No server or AI connection needed."
                          : "AI review sends the three photos to Gemini and awards leaves only after an approved review.")
                         .font(.subheadline)
-                    Toggle("Scan sounds", isOn: $scanSounds)
+                    Toggle("Scan sounds", isOn: $store.scanSounds)
                 } header: { Text("Scan experience") } footer: {
                     Text("Success sounds respect your iPhone’s Silent Mode. Demo progress is saved; developer preview progress remains temporary.")
                 }

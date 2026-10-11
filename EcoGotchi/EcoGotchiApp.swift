@@ -99,6 +99,21 @@ struct PixelWordmark: View {
 
 enum GameSprite: String, CaseIterable {
     case pip, fern, clover, maple, flowers, mushrooms, house, leaf, bottle, can, cup, paper
+    case bubbles, shelly, inky, fin, waddles, flurry, pebble, snowdrop
+    case berries, kelp, crunch, apple
+    case bench, lantern, fernPlant, coral, pearl, sandcastle, igloo, snowman, spruce
+
+    private var atlas: (name: String, bounds: CGRect) {
+        let friends: [GameSprite] = [.bubbles, .shelly, .inky, .fin, .waddles, .flurry, .pebble, .snowdrop, .berries, .kelp, .crunch, .apple]
+        let decor: [GameSprite] = [.bench, .lantern, .fernPlant, .coral, .pearl, .sandcastle, .igloo, .snowman, .spruce]
+        if let index = friends.firstIndex(of: self) {
+            return ("FriendsAndFood", CGRect(x: CGFloat(index % 4) / 4, y: CGFloat(index / 4) / 3, width: 0.25, height: 1.0 / 3))
+        }
+        if let index = decor.firstIndex(of: self) {
+            return ("HabitatDecor", CGRect(x: CGFloat(index % 3) / 3, y: CGFloat(index / 3) / 3, width: 1.0 / 3, height: 1.0 / 3))
+        }
+        return ("EcoSpritesPixel", bounds)
+    }
 
     // Atlas artwork has hand-spaced rows, so use content bounds rather than a uniform grid.
     var bounds: CGRect {
@@ -112,9 +127,13 @@ enum GameSprite: String, CaseIterable {
     }
 
     static let images: [GameSprite: UIImage] = {
-        guard let atlas = UIImage(named: "EcoSpritesPixel")?.cgImage else { return [:] }
+        let atlases = ["EcoSpritesPixel", "FriendsAndFood", "HabitatDecor"].reduce(into: [String: CGImage]()) { result, name in
+            result[name] = UIImage(named: name)?.cgImage
+        }
         return Dictionary(uniqueKeysWithValues: allCases.compactMap { sprite in
-            let b = sprite.bounds
+            let source = sprite.atlas
+            guard let atlas = atlases[source.name] else { return nil }
+            let b = source.bounds
             let crop = CGRect(x: b.minX * CGFloat(atlas.width), y: b.minY * CGFloat(atlas.height),
                               width: b.width * CGFloat(atlas.width), height: b.height * CGFloat(atlas.height)).integral
             guard let image = atlas.cropping(to: crop) else { return nil }
@@ -124,12 +143,31 @@ enum GameSprite: String, CaseIterable {
 }
 
 struct PixelSprite: View {
+    private static let expressions: [GameSprite: [HabitatCondition: UIImage]] = {
+        var result: [GameSprite: [HabitatCondition: UIImage]] = [:]
+        for animal in HabitatAnimal.all {
+            guard let sprite = GameSprite(rawValue: animal.id) else { continue }
+            for condition in HabitatCondition.allCases {
+                guard let frame = AnimalExpressions.frame(animalID: animal.id, condition: condition),
+                      let atlas = UIImage(named: frame.asset)?.cgImage else { continue }
+                let b = frame.rect
+                let crop = CGRect(x:b.minX * CGFloat(atlas.width), y:b.minY * CGFloat(atlas.height),
+                    width:b.width * CGFloat(atlas.width), height:b.height * CGFloat(atlas.height)).integral
+                if let image = atlas.cropping(to: crop) {
+                    result[sprite, default: [:]][condition] = UIImage(cgImage: image)
+                }
+            }
+        }
+        return result
+    }()
+
     let sprite: GameSprite
     var size: CGFloat = 48
+    var condition: HabitatCondition?
 
     var body: some View {
         Group {
-            if let image = GameSprite.images[sprite] {
+            if let image = condition.flatMap({ Self.expressions[sprite]?[$0] }) ?? GameSprite.images[sprite] {
                 Image(uiImage: image).resizable().interpolation(.none).scaledToFit()
             } else {
                 Image(systemName: "leaf.fill").resizable().scaledToFit()

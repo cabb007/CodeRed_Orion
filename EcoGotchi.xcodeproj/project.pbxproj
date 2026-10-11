@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		4C1161432AD6C26B723D84BC /* EcoGotchi/Views/HabitatAtmosphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7EFE50DB49D19816E0E36C9; };
+		CF5B88586F7CCFF7C034A68D /* EcoGotchi/Views/RecyclingMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1452968CDF1710881609DF; };
+		833E8E0ADC1DDB6B94D443A3 /* EcoGotchi/Models/RecyclingFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68F29A21030EB7079E69490; };
+		F1BF218EBD12297D08A19543 /* EcoGotchi/Models/RecyclingLocations.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9F95D18C33EF830E1A6C0F4; };
+		89D4CBE2B7E2C5B010C5C330 /* EcoGotchi/Views/InteractiveDecoration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7685DDDB2D28FFD2B217AC8F; };
+		A48690ED4A0B3F582B014BC1 /* EcoGotchi/Views/InteractivePet.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8132BC03723153999B7CFE1; };
+		3F9C0A3DBC5FE89DA418E622 /* EcoGotchi/Models/PetMotion.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5599926D2867BAE315515135; };
 		EE1B7ABAB20473C81AA01D36 /* EcoGotchi/Sounds/scan-disposal.wav in Resources */ = {isa = PBXBuildFile; fileRef = 95E043E7222EB0D4B6D70B9C; };
 		B0B583974FF21B7603517094 /* EcoGotchi/Sounds/scan-item.wav in Resources */ = {isa = PBXBuildFile; fileRef = 94A1A8D91DE59F7E52BA8001; };
 		5E56B718B1E340D8E8866A12 /* EcoGotchi/Sounds/scan-bin.wav in Resources */ = {isa = PBXBuildFile; fileRef = 9F7087771A03FCF6ADC93E1A; };
@@ -25,9 +32,22 @@
 		955B187CE8A831B8B2C71F34 /* EcoGotchi/Views/CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4440A7E10CDF876F77ACC982 /* EcoGotchi/Views/CollectionView.swift */; };
 		9F8D959D2110B8420555352F /* EcoGotchi/Views/RecyclingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BD7581AC2BF7074E0F55D4 /* EcoGotchi/Views/RecyclingView.swift */; };
 		CB84B5B0ED7CDBE64842A3AF /* EcoGotchi/Views/HabitatScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8629733398EA6EB53A42BC4B /* EcoGotchi/Views/HabitatScene.swift */; };
+		A1DEA96AFB03978D3BD68460 /* EcoGotchi/Models/AnimalExpressions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0A04BA1B19C89E4C604FA48; };
+		27BDD310DA85CA2EF8A83041 /* EcoGotchi/Models/AnimalWorld.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3698010291428D650116712; };
+		5D63554342E0266B10292D2A /* EcoGotchi/Models/CommunityBins.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DE76B4B7F2CAF4223DC010; };
+		27B6A41FD0490F9FB14D97CB /* EcoGotchi/Views/LeafShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DC07428D42E6ECEBDEBB08; };
+		9D8DC67814D5E5625172330B /* EcoGotchi/Views/NewBinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AAE05A9C64459F16A53F42; };
+		D7D4926C58CB00EB1A1F1F73 /* EcoGotchi/Views/CommunityLandmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360100FFF0B9179472C583C3; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C7EFE50DB49D19816E0E36C9 /* EcoGotchi/Views/HabitatAtmosphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/HabitatAtmosphere.swift; sourceTree = SOURCE_ROOT; };
+		3D1452968CDF1710881609DF /* EcoGotchi/Views/RecyclingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/RecyclingMapView.swift; sourceTree = SOURCE_ROOT; };
+		B68F29A21030EB7079E69490 /* EcoGotchi/Models/RecyclingFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/RecyclingFinder.swift; sourceTree = SOURCE_ROOT; };
+		B9F95D18C33EF830E1A6C0F4 /* EcoGotchi/Models/RecyclingLocations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/RecyclingLocations.swift; sourceTree = SOURCE_ROOT; };
+		7685DDDB2D28FFD2B217AC8F /* EcoGotchi/Views/InteractiveDecoration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/InteractiveDecoration.swift; sourceTree = SOURCE_ROOT; };
+		D8132BC03723153999B7CFE1 /* EcoGotchi/Views/InteractivePet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/InteractivePet.swift; sourceTree = SOURCE_ROOT; };
+		5599926D2867BAE315515135 /* EcoGotchi/Models/PetMotion.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/PetMotion.swift; sourceTree = SOURCE_ROOT; };
 		95E043E7222EB0D4B6D70B9C /* EcoGotchi/Sounds/scan-disposal.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "EcoGotchi/Sounds/scan-disposal.wav"; sourceTree = SOURCE_ROOT; };
 		94A1A8D91DE59F7E52BA8001 /* EcoGotchi/Sounds/scan-item.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "EcoGotchi/Sounds/scan-item.wav"; sourceTree = SOURCE_ROOT; };
 		9F7087771A03FCF6ADC93E1A /* EcoGotchi/Sounds/scan-bin.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; path = "EcoGotchi/Sounds/scan-bin.wav"; sourceTree = SOURCE_ROOT; };
@@ -48,6 +68,12 @@
 		8629733398EA6EB53A42BC4B /* EcoGotchi/Views/HabitatScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/HabitatScene.swift; sourceTree = SOURCE_ROOT; };
 		A51E30EBEB8499B83AF6318A /* EcoGotchi/Models/HabitatStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/HabitatStore.swift; sourceTree = SOURCE_ROOT; };
 		B6BD7581AC2BF7074E0F55D4 /* EcoGotchi/Views/RecyclingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/RecyclingView.swift; sourceTree = SOURCE_ROOT; };
+		D0A04BA1B19C89E4C604FA48 /* EcoGotchi/Models/AnimalExpressions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Models/AnimalExpressions.swift"; sourceTree = SOURCE_ROOT; };
+		E3698010291428D650116712 /* EcoGotchi/Models/AnimalWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Models/AnimalWorld.swift"; sourceTree = SOURCE_ROOT; };
+		84DE76B4B7F2CAF4223DC010 /* EcoGotchi/Models/CommunityBins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Models/CommunityBins.swift"; sourceTree = SOURCE_ROOT; };
+		55DC07428D42E6ECEBDEBB08 /* EcoGotchi/Views/LeafShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Views/LeafShopView.swift"; sourceTree = SOURCE_ROOT; };
+		44AAE05A9C64459F16A53F42 /* EcoGotchi/Views/NewBinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Views/NewBinView.swift"; sourceTree = SOURCE_ROOT; };
+		360100FFF0B9179472C583C3 /* EcoGotchi/Views/CommunityLandmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "EcoGotchi/Views/CommunityLandmarksView.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,6 +90,19 @@
 		325F10A6957A34D66CB8C0E4 = {
 			isa = PBXGroup;
 			children = (
+				360100FFF0B9179472C583C3 /* EcoGotchi/Views/CommunityLandmarksView.swift */,
+				44AAE05A9C64459F16A53F42 /* EcoGotchi/Views/NewBinView.swift */,
+				55DC07428D42E6ECEBDEBB08 /* EcoGotchi/Views/LeafShopView.swift */,
+				84DE76B4B7F2CAF4223DC010 /* EcoGotchi/Models/CommunityBins.swift */,
+				E3698010291428D650116712 /* EcoGotchi/Models/AnimalWorld.swift */,
+				D0A04BA1B19C89E4C604FA48 /* EcoGotchi/Models/AnimalExpressions.swift */,
+				C7EFE50DB49D19816E0E36C9 /* EcoGotchi/Views/HabitatAtmosphere.swift */,
+				3D1452968CDF1710881609DF /* EcoGotchi/Views/RecyclingMapView.swift */,
+				B68F29A21030EB7079E69490 /* EcoGotchi/Models/RecyclingFinder.swift */,
+				B9F95D18C33EF830E1A6C0F4 /* EcoGotchi/Models/RecyclingLocations.swift */,
+				7685DDDB2D28FFD2B217AC8F /* EcoGotchi/Views/InteractiveDecoration.swift */,
+				D8132BC03723153999B7CFE1 /* EcoGotchi/Views/InteractivePet.swift */,
+				5599926D2867BAE315515135 /* EcoGotchi/Models/PetMotion.swift */,
 				95E043E7222EB0D4B6D70B9C /* EcoGotchi/Sounds/scan-disposal.wav */,
 				94A1A8D91DE59F7E52BA8001 /* EcoGotchi/Sounds/scan-item.wav */,
 				9F7087771A03FCF6ADC93E1A /* EcoGotchi/Sounds/scan-bin.wav */,
@@ -161,6 +200,19 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7D4926C58CB00EB1A1F1F73 /* EcoGotchi/Views/CommunityLandmarksView.swift in Sources */,
+				9D8DC67814D5E5625172330B /* EcoGotchi/Views/NewBinView.swift in Sources */,
+				27B6A41FD0490F9FB14D97CB /* EcoGotchi/Views/LeafShopView.swift in Sources */,
+				5D63554342E0266B10292D2A /* EcoGotchi/Models/CommunityBins.swift in Sources */,
+				27BDD310DA85CA2EF8A83041 /* EcoGotchi/Models/AnimalWorld.swift in Sources */,
+				A1DEA96AFB03978D3BD68460 /* EcoGotchi/Models/AnimalExpressions.swift in Sources */,
+				4C1161432AD6C26B723D84BC /* EcoGotchi/Views/HabitatAtmosphere.swift in Sources */,
+				CF5B88586F7CCFF7C034A68D /* EcoGotchi/Views/RecyclingMapView.swift in Sources */,
+				833E8E0ADC1DDB6B94D443A3 /* EcoGotchi/Models/RecyclingFinder.swift in Sources */,
+				F1BF218EBD12297D08A19543 /* EcoGotchi/Models/RecyclingLocations.swift in Sources */,
+				89D4CBE2B7E2C5B010C5C330 /* EcoGotchi/Views/InteractiveDecoration.swift in Sources */,
+				A48690ED4A0B3F582B014BC1 /* EcoGotchi/Views/InteractivePet.swift in Sources */,
+				3F9C0A3DBC5FE89DA418E622 /* EcoGotchi/Models/PetMotion.swift in Sources */,
 				37E6E3554010E1B9FC4CCA03 /* EcoGotchi/Views/ScanFeedback.swift in Sources */,
 				5A7B4E51D8BD33261E50C5BD /* EcoGotchi/Views/RecyclingCamera.swift in Sources */,
 				592F3756A5554EC5627DAD0F /* EcoGotchi/Models/RecyclingCaptureDraft.swift in Sources */,

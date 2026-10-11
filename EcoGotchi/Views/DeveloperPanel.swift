@@ -11,13 +11,24 @@ struct DeveloperPanel: View {
         NavigationStack {
             Form {
                 Section {
+                    Toggle("Dev Mode", isOn: Binding(get: { store.isDeveloperMode }, set: { enabled in
+                        if enabled { store.beginDeveloperMode() } else { store.endDeveloperMode() }
+                    }))
+                    Text("Turning this on creates a temporary copy. Turn it off to restore saved progress and settings.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                if store.isDeveloperMode {
+                Section {
                     HStack {
                         Text(store.state.condition.title).font(.headline)
                         Spacer()
                         Text("\(store.state.litter)/6 litter · \(store.state.points) leaves").font(.caption)
                     }
-                    Text("Test changes only. Exit preview to restore your habitat.")
+                    Text("Test changes only. Turn Dev Mode off to restore your habitat.")
                         .font(.caption).foregroundStyle(.secondary)
+                    Picker("Preview habitat", selection: Binding(get: { store.state.habitat }, set: store.selectHabitat)) {
+                        ForEach(HabitatKind.allCases) { Text($0.title).tag($0) }
+                    }
                     Picker("Controls", selection: $category) {
                         ForEach(DeveloperCategory.allCases) { group in Text(group.rawValue).tag(group) }
                     }.pickerStyle(.segmented)
@@ -64,16 +75,16 @@ struct DeveloperPanel: View {
 
                 if category == .friends {
                     Section("Animals") {
-                        Stepper("Actions: \(store.state.actions.count)", value: Binding(get: { store.state.actions.count }, set: store.setActionCount), in: 0...30)
-                        Text("Unlocks: Pip at 0, Fern at 1, Clover at 3, Maple at 6 actions.").font(.caption).foregroundStyle(.secondary)
+                        Stepper("Actions here: \(store.state.habitatActionCount)", value: Binding(get: { store.state.habitatActionCount }, set: store.setActionCount), in: 0...30)
+                        Text("Each habitat welcomes friends at 0, 1, 3, and 6 recycling actions.").font(.caption).foregroundStyle(.secondary)
                         Button("Unlock all animals") { store.setActionCount(6) }
                         Toggle("Keep animals out when polluted", isOn: $store.developer.ignoreRetreat)
-                        ForEach(HabitatAnimal.all) { animal in
+                        ForEach(store.state.habitat.animals) { animal in
                             Toggle(isOn: animalBinding(animal.id)) {
                                 HStack {
                                     PixelSprite(sprite: GameSprite(rawValue: animal.id) ?? .pip, size: 32)
                                     Text(animal.name)
-                                    if store.state.actions.count < animal.requiredActions {
+                                    if store.state.habitatActionCount < animal.requiredActions {
                                         Text("locked").font(.caption).foregroundStyle(.secondary)
                                     }
                                 }
@@ -94,7 +105,13 @@ struct DeveloperPanel: View {
                         Stepper("Leaves per action: \(store.developer.actionReward)", value: $store.developer.actionReward, in: 0...100, step: 5)
                         Stepper("Trash cleared per action: \(store.developer.cleanupPerAction)", value: $store.developer.cleanupPerAction, in: 0...6)
                         Button("Simulate completed recycling") { store.record(item: "Developer test action") }
-                        ForEach(Decoration.all) { item in
+                        Button("Stock food bag · five of every snack") { store.stockPreviewFood() }
+                        ForEach(store.state.habitat.foods) { food in
+                            Stepper("\(food.name): \(store.state.foodCount(food.id))", value: Binding(
+                                get: { store.state.foodCount(food.id) },
+                                set: { store.setPreviewFoodCount(food.id, count: $0) }), in: 0...99)
+                        }
+                        ForEach(store.state.habitat.decorations) { item in
                             Toggle(isOn: Binding(get: { store.state.ownedDecorations.contains(item.id) }, set: { store.setDecoration(item.id, owned: $0) })) {
                                 HStack {
                                     PixelSprite(sprite: GameSprite(rawValue: item.id) ?? .leaf, size: 32)
@@ -116,8 +133,12 @@ struct DeveloperPanel: View {
                     }
 
                     Section("Scene elements") {
-                        Toggle("Animal movement", isOn: $store.developer.animateAnimals)
-                        Toggle("Sparkles & pollution haze", isOn: $store.developer.showAtmosphere)
+                        Toggle("Scan sounds", isOn: $store.scanSounds)
+                        Toggle("Pets roam on their own", isOn: $store.developer.animateAnimals)
+                        Toggle("Habitat animations", isOn: $store.developer.animateHabitat)
+                        Toggle("Show habitat effects", isOn: $store.developer.showAtmosphere)
+                        Text("Leaves and pond ripples in the grove, bubbles and kelp in the reef, snow and wind in the glade. Pause animations to inspect a still frame.")
+                            .font(.caption).foregroundStyle(.secondary)
                         Toggle("Element labels", isOn: $store.developer.showLabels)
                         Toggle("Placement grid", isOn: $store.developer.showGrid)
                         HStack {
@@ -132,15 +153,16 @@ struct DeveloperPanel: View {
                 }
 
                 Section("Quick actions") {
-                    Button("Thriving demo · all friends + 200 leaves") { store.unlockPreview() }
+                    Button("Thriving demo · all friends, food + 200 leaves") { store.unlockPreview() }
                     Button("Reset this preview", role: .destructive) { showReset = true }
+                }
                 }
             }
             .scrollContentBackground(.hidden).background(Palette.cream)
             .navigationTitle("Developer mode").navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Exit preview") { store.endDeveloperMode(); dismiss() }.font(.caption.bold())
+                    Button("Done") { dismiss() }.font(.caption.bold())
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
