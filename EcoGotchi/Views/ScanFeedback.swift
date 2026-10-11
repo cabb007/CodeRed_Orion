@@ -13,7 +13,6 @@ struct ScanInProgressOverlay: View {
         switch step {
         case .bin: return "Scanning bin…"
         case .item: return "Scanning item…"
-        case .disposal: return "Scanning disposal…"
         }
     }
 

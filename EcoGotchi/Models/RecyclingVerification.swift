@@ -3,8 +3,10 @@ import Foundation
 enum RecyclingMode: String, CaseIterable, Identifiable {
     case demo, ai
     var id: String { rawValue }
-    var title: String { self == .demo ? "Demo" : "AI review" }
+    var title: String { self == .demo ? "Demo" : "Actual" }
     static let demoLeaves = 20
+
+    func automaticallyAccepts(samplePhotos: Bool = false) -> Bool { self == .demo || samplePhotos }
 }
 
 enum RecycledMaterial: String, Codable, CaseIterable {
@@ -55,13 +57,18 @@ struct RecyclingAssessment: Codable {
     // Optional so receipts cached by earlier servers remain readable.
     var localAcceptance: String? = nil
     var acceptanceEvidence: String? = nil
+    var binType: String? = nil
 
     var needsBinGuidance: Bool {
         status == .needsReview && (localAcceptance == "unknown" || acceptanceEvidence == "none")
     }
 
     private var hasValidBinEvidence: Bool {
-        if localAcceptance == nil && acceptanceEvidence == nil { return true }
+        if let binType, binType != "recycling" { return false }
+        if binType == "recycling" && localAcceptance == "likely_compatible" {
+            return ["printed_label", "material_icon", "nearby_sign", "bin_appearance"].contains(acceptanceEvidence ?? "")
+        }
+        if localAcceptance == nil && acceptanceEvidence == nil && binType == nil { return true }
         return localAcceptance == "recyclable_here" &&
             ["printed_label", "material_icon", "nearby_sign"].contains(acceptanceEvidence ?? "")
     }

@@ -184,8 +184,8 @@ struct InteractivePet: View {
             UIAccessibility.post(notification: .announcement, argument: "\(animal.name) enjoyed \(food.name)!")
             return
         }
-        showAffection(["So happy!", "More pets!", "Love you!"][affection % 3])
-        UIAccessibility.post(notification: .announcement, argument: "\(animal.name) is happy!")
+        showAffection(animal.pettingSound)
+        UIAccessibility.post(notification: .announcement, argument: "\(animal.name): \(animal.pettingSound)")
     }
 
     private func showAffection(_ message: String, shouldHop: Bool = true, food: GameSprite? = nil) {
@@ -236,14 +236,18 @@ private struct PetHearts: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var floating = false
     var body: some View {
-        HStack(spacing: 9) {
+        ZStack {
             ForEach(0..<3) { index in
                 PixelHeart().fill(Palette.coral).frame(width: 13, height: 12)
-                    .offset(y: reduceMotion ? 0 : (floating ? -CGFloat(12 + index * 5) : 3))
+                    .rotationEffect(.degrees(reduceMotion ? 0 : (floating ? [-24.0, 10.0, 28.0][index] : 0)))
+                    .scaleEffect(reduceMotion ? 1 : (floating ? 0.75 : 1))
+                    .offset(x: reduceMotion ? CGFloat(index - 1) * 17 : (floating ? [-35.0, 6.0, 37.0][index] : CGFloat(index - 1) * 4),
+                            y: reduceMotion ? 0 : (floating ? [-14.0, -38.0, 7.0][index] : 2))
                     .opacity(reduceMotion ? 1 : (floating ? 0 : 1))
+                    .animation(reduceMotion ? nil : .easeOut(duration: 1.15).delay(Double(index) * 0.06), value: floating)
             }
         }.onAppear {
-            if !reduceMotion { withAnimation(.easeOut(duration: 1.4)) { floating = true } }
+            if !reduceMotion { floating = true }
         }
     }
 }

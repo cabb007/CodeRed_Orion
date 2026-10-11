@@ -1,30 +1,27 @@
 import Foundation
 
 enum RecyclingCaptureStep: String, CaseIterable, Identifiable {
-    case bin, item, disposal
+    case bin, item
     var id: String { rawValue }
     var title: String {
-        switch self { case .bin: "Your bin"; case .item: "Your item"; case .disposal: "Disposal" }
+        switch self { case .bin: "Your bin"; case .item: "Your item" }
     }
     var instruction: String {
         switch self {
-        case .bin: "Show the whole bin and its opening. Include any sorting icons, labels, or nearby signs if available. A written label is optional."
-        case .item: "Show one item clearly, including its material markings. Keep the same bin nearby."
-        case .disposal: "Show that item entering the same bin. Use the timer or ask someone to help. Never reach inside."
+        case .bin: "Show the whole bin and its opening. We recognize recycling bins visually; a readable label is optional."
+        case .item: "Show one item clearly, including its material markings."
         }
     }
     var successMessage: String {
         switch self {
         case .bin: "Successfully scanned bin"
         case .item: "Successfully scanned item"
-        case .disposal: "Successfully scanned disposal"
         }
     }
     var demoInstruction: String {
         switch self {
         case .bin: "Point your camera at the bin and take a picture."
         case .item: "Take a picture of your item."
-        case .disposal: "Take the final picture to finish your scan. Use the timer if you need both hands."
         }
     }
 }
@@ -58,7 +55,7 @@ struct RecyclingCaptureDraft {
     mutating func restart() { self = RecyclingCaptureDraft() }
 
     func submission() throws -> RecyclingSubmission {
-        guard isComplete else { throw VerificationError.message("Capture the bin, item, and disposal first.") }
+        guard isComplete else { throw VerificationError.message("Capture the bin and item first.") }
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return RecyclingSubmission(submissionId: id, photos: frames.map {

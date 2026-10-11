@@ -15,25 +15,23 @@ struct RecyclingCaptureChecks {
         do { try draft.capture(jpeg: Data([2]), at: start); preconditionFailure("Out-of-order timestamp accepted") }
         catch { precondition(draft.frames.count == 1) }
         try draft.capture(jpeg: Data([2]), at: start.addingTimeInterval(1))
-        precondition(draft.nextStep == .disposal && !draft.isComplete)
-        try draft.capture(jpeg: Data([3]), at: start.addingTimeInterval(2))
         precondition(draft.isComplete && draft.nextStep == nil)
         let submission = try draft.submission()
-        precondition(submission.photos.map(\.role) == ["bin", "item", "disposal"])
+        precondition(submission.photos.map(\.role) == ["bin", "item"], "The item photo finishes the scan")
         precondition(submission.photos.allSatisfy { $0.source == "camera" && $0.mimeType == "image/jpeg" })
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
         let first = try encoder.encode(submission)
         let retry = try encoder.encode(draft.submission())
         precondition(first == retry, "Retry must preserve the same ID, photos, and capture times")
-        do { try draft.capture(jpeg: Data([4]), at: start.addingTimeInterval(3)); preconditionFailure("Fourth photo accepted") }
-        catch { precondition(draft.frames.count == 3) }
+        do { try draft.capture(jpeg: Data([3]), at: start.addingTimeInterval(2)); preconditionFailure("Third photo accepted") }
+        catch { precondition(draft.frames.count == 2) }
         let oldID = draft.id
         draft.restart()
         precondition(draft.id != oldID && draft.frames.isEmpty && draft.nextStep == .bin)
         precondition((try? draft.submission()) == nil, "Restart discards every previous photo")
         do { try draft.capture(jpeg: Data(count: 1_500_001), at: start); preconditionFailure("Oversized photo accepted") }
         catch { precondition(draft.frames.isEmpty) }
-        for index in 0..<3 {
+        for index in 0..<2 {
             try draft.capture(jpeg: Data([7]), at: start.addingTimeInterval(Double(index)), allowRepeatedImages: true)
         }
         precondition(draft.isComplete, "Demo accepts every captured image, including visually identical photos")

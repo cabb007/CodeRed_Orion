@@ -19,7 +19,7 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>Take three photos to complete a recycling scan. Demo mode keeps photos on your phone and accepts them automatically. In AI review mode, only Send for review uploads the three photos to your EcoGotchi server and Google Gemini.</string>
+	<string>Take two photos to complete a recycling scan. Demo keeps them on your phone. In Actual mode, Send for review sends the two photos to Google Gemini, directly or through your chosen review server.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Connect to your EcoGotchi review server on the same Wi-Fi for a local demo.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

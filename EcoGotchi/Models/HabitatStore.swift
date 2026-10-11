@@ -6,6 +6,12 @@ final class HabitatStore: ObservableObject {
     @Published private var session: HabitatSession
     @Published var developer = DeveloperOptions()
     @Published private(set) var selectedFoodID: String?
+    @Published private(set) var scanReview: ScanReview?
+    private var scanReviewTask: Task<Void, Never>?
+    private var reviewSubmission: RecyclingSubmission?
+    private var reviewer: (@MainActor (RecyclingSubmission) async throws -> RecyclingAssessment)?
+    private var reviewAttemptID = UUID()
+    private var previewID: UUID?
     @Published var recyclingMode: RecyclingMode {
         didSet { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") }
     }
@@ -46,7 +52,7 @@ final class HabitatStore: ObservableObject {
     @discardableResult
     func recordDemoAction(_ submission: RecyclingSubmission) -> Bool {
         guard !isDeveloperMode, isDemoRecycling,
-              submission.photos.map(\.role) == ["bin", "item", "disposal"],
+              submission.photos.map(\.role) == ["bin", "item"],
               submission.photos.allSatisfy({ $0.source == "camera" && !$0.data.isEmpty }),
               !state.actions.contains(where: { $0.submissionID == submission.submissionId }) else { return false }
         session.state.recordAction(item: "Recycling demo", reward: RecyclingMode.demoLeaves, cleanup: 1)
@@ -59,16 +65,130 @@ final class HabitatStore: ObservableObject {
 
     @discardableResult
     func recordReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
-        guard !isDeveloperMode, assessment.isValidReward,
-              !state.actions.contains(where: { $0.verificationID == assessment.receiptId || $0.submissionID == assessment.submissionId }) else { return false }
-        session.state.recordAction(item: assessment.itemName, reward: assessment.leaves, cleanup: assessment.cleanup)
-        let index = session.state.actions.count - 1
-        session.state.actions[index].verificationID = assessment.receiptId
-        session.state.actions[index].submissionID = assessment.submissionId
-        session.state.actions[index].material = assessment.material.rawValue
-        session.state.actions[index].recyclingTip = assessment.tip
+        guard !isDeveloperMode else { return false }
+        return applyReviewedAction(assessment)
+    }
+
+    @discardableResult
+    func recordPreviewReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
+        guard isDeveloperMode, recyclingMode == .ai else { return false }
+        return applyReviewedAction(assessment)
+    }
+
+    private func applyReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
+        let preview = isDeveloperMode
+        let habitat = state.habitat
+        let applied = Self.apply(assessment, to: &session.state, habitat: habitat, preview: preview)
         save()
-        return true
+        return applied != nil
+    }
+
+    private static func apply(_ assessment: RecyclingAssessment, to state: inout HabitatState,
+                              habitat: HabitatKind, preview: Bool) -> Int? {
+        guard assessment.isValidReward,
+              !state.actions.contains(where: { $0.verificationID == assessment.receiptId || $0.submissionID == assessment.submissionId }) else { return nil }
+        // Change a copy so a late result never switches the visible habitat or food selection.
+        var updated = state
+        let visibleHabitat = updated.habitat
+        updated.selectHabitat(habitat)
+        let before = updated.litter
+        updated.recordAction(item: preview ? "[Preview] \(assessment.itemName)" : assessment.itemName,
+                             reward: assessment.leaves, cleanup: assessment.cleanup)
+        let index = updated.actions.count - 1
+        updated.actions[index].verificationID = assessment.receiptId
+        updated.actions[index].submissionID = assessment.submissionId
+        updated.actions[index].material = assessment.material.rawValue
+        updated.actions[index].recyclingTip = assessment.tip
+        let cleared = before - updated.litter
+        updated.selectHabitat(visibleHabitat)
+        state = updated
+        return cleared
+    }
+
+    func startScanReview(_ submission: RecyclingSubmission,
+                         using reviewer: @escaping @MainActor (RecyclingSubmission) async throws -> RecyclingAssessment) throws {
+        guard scanReview == nil else { throw VerificationError.message("Finish or dismiss your current review first.") }
+        guard recyclingMode == .ai, submission.photos.map(\.role) == ["bin", "item"] else {
+            throw VerificationError.message("Capture the bin and item in Actual mode first.")
+        }
+        reviewSubmission = submission
+        self.reviewer = reviewer
+        scanReview = ScanReview(id: submission.submissionId, habitat: state.habitat, previewID: previewID)
+        runScanReview()
+    }
+
+    func retryScanReview() {
+        guard scanReview?.status == .failed, reviewSubmission != nil else { return }
+        runScanReview()
+    }
+
+    func cancelScanReview() {
+        guard scanReview?.status == .reviewing else { return }
+        scanReview?.cancelling = true
+        scanReviewTask?.cancel()
+    }
+
+    func dismissScanReview() {
+        guard scanReview?.status != .reviewing else { return }
+        clearScanReview()
+    }
+
+    private func clearScanReview() {
+        reviewAttemptID = UUID()
+        scanReviewTask?.cancel()
+        scanReviewTask = nil
+        reviewSubmission = nil
+        reviewer = nil
+        scanReview = nil
+    }
+
+    private func runScanReview() {
+        guard let submission = reviewSubmission, let reviewer, var job = scanReview else { return }
+        job.status = .reviewing
+        job.startedAt = Date()
+        job.message = nil
+        job.cancelling = false
+        scanReview = job
+        let attempt = UUID()
+        reviewAttemptID = attempt
+        scanReviewTask = Task { @MainActor [weak self] in
+            do {
+                let assessment = try await reviewer(submission)
+                try Task.checkCancellation()
+                guard let self, self.reviewAttemptID == attempt, var current = self.scanReview else { return }
+                guard assessment.submissionId == submission.submissionId,
+                      assessment.status != .approved || assessment.isValidReward else {
+                    throw VerificationError.message("The review didn’t match this scan. No leaves were added. Retry the same photos.")
+                }
+                var cleared: Int?
+                if let preview = current.previewID {
+                    guard self.previewID == preview, self.isDeveloperMode else { return }
+                    cleared = Self.apply(assessment, to: &self.session.state, habitat: current.habitat, preview: true)
+                } else {
+                    self.session.updateSavedGame {
+                        cleared = Self.apply(assessment, to: &$0, habitat: current.habitat, preview: false)
+                    }
+                }
+                self.save()
+                current.assessment = assessment
+                current.leaves = cleared != nil ? assessment.leaves : 0
+                current.cleanup = cleared ?? 0
+                current.alreadyRewarded = assessment.status == .approved && cleared == nil
+                current.status = .finished
+                self.scanReview = current
+                self.reviewSubmission = nil
+                self.reviewer = nil
+                self.scanReviewTask = nil
+            } catch {
+                guard let self, self.reviewAttemptID == attempt else { return }
+                self.scanReview?.status = .failed
+                self.scanReview?.cancelling = false
+                self.scanReview?.message = error is CancellationError
+                    ? "Review cancelled. Your photos are ready to retry; no leaves were added."
+                    : error.localizedDescription
+                self.scanReviewTask = nil
+            }
+        }
     }
 
     func buy(_ decoration: Decoration) { session.state.purchase(decoration); save() }
@@ -130,12 +250,15 @@ final class HabitatStore: ObservableObject {
         guard !isDeveloperMode else { return }
         refresh()
         session.beginPreview()
+        previewID = UUID()
         session.state.lastPollution = Date()
         developer = DeveloperOptions()
         selectedFoodID = nil
     }
 
     func endDeveloperMode() {
+        if scanReview?.previewID != nil { clearScanReview() }
+        previewID = nil
         session.endPreview()
         developer = DeveloperOptions()
         selectedFoodID = nil
@@ -197,6 +320,8 @@ final class HabitatStore: ObservableObject {
 
     func resetPreview() {
         guard isDeveloperMode else { return }
+        if scanReview?.previewID != nil { clearScanReview() }
+        previewID = UUID()
         session.state = HabitatState()
         developer = DeveloperOptions()
         selectedFoodID = nil
@@ -213,6 +338,32 @@ final class HabitatStore: ObservableObject {
     private func save() {
         if let data = try? JSONEncoder().encode(session.persistedState) {
             defaults.set(data, forKey: key)
+        }
+    }
+}
+
+struct ScanReview: Identifiable {
+    enum Status { case reviewing, finished, failed }
+    let id: UUID
+    let habitat: HabitatKind
+    let previewID: UUID?
+    var status = Status.reviewing
+    var startedAt = Date()
+    var cancelling = false
+    var assessment: RecyclingAssessment?
+    var leaves = 0
+    var cleanup = 0
+    var alreadyRewarded = false
+    var message: String?
+
+    var title: String {
+        switch status {
+        case .reviewing: return cancelling ? "Cancelling review…" : "Reviewing scan…"
+        case .failed: return "Scan needs attention"
+        case .finished:
+            if leaves > 0 { return "+\(leaves) leaves\(previewID == nil ? "" : " · preview")" }
+            if alreadyRewarded { return "Scan already rewarded" }
+            return assessment?.needsBinGuidance == true ? "Bin unclear" : "Review ready · no leaves"
         }
     }
 }

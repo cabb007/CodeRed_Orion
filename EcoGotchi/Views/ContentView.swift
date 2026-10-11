@@ -16,7 +16,7 @@ struct ContentView: View {
 
             VStack(spacing: 16) {
                 topBar
-                status
+                HabitatStatusControls(state: store.state, selectHabitat: store.selectHabitat)
                 Spacer(minLength: 12)
                 actionDock
             }
@@ -80,39 +80,23 @@ struct ContentView: View {
             .accessibilityLabel(title == "Dev" || highlighted ? "Developer controls" : title)
     }
 
-    private var status: some View {
-        VStack(spacing: 8) {
-            Button { openShop(.habitats) } label: {
-                HStack(spacing: 6) {
-                    Text(store.state.habitat.title.uppercased()).tracking(1)
-                    Image(systemName: "chevron.down").font(.system(size: 9, weight: .bold))
-                }.font(.system(size: 12, weight: .heavy, design: .monospaced)).frame(minHeight: 32)
-            }.buttonStyle(.plain).accessibilityLabel("Change habitat. Current: \(store.state.habitat.title)")
-            HStack(spacing: 7) {
-                Rectangle().fill(conditionColor).frame(width: 7, height: 7)
-                Text(store.state.condition.title.uppercased()).font(.system(size: 10, weight: .bold))
-                Text("· \(store.state.litter)/6 litter").font(.system(size: 10))
-            }
-            HStack(spacing: 3) {
-                ForEach(0..<10) { index in
-                    Rectangle().fill(index * 10 < store.state.health ? conditionColor : Palette.forest.opacity(0.14))
-                        .frame(width: 12, height: 5)
-                }
-            }.accessibilityLabel("Habitat health \(store.state.health) percent")
-        }.padding(.horizontal, 18).padding(.vertical, 12)
-            .pixelPanel(Palette.paper.opacity(0.9), shadow: false)
-    }
-
-    private var conditionColor: Color {
-        switch store.state.condition {
-        case .thriving, .littered: Palette.forest
-        case .tarnished: Color(red: 0.55, green: 0.39, blue: 0.14)
-        case .polluted: Palette.coral
-        }
-    }
-
     private var actionDock: some View {
         VStack(spacing: 12) {
+            if let review = store.scanReview {
+                Button { panel = .camera } label: {
+                    HStack(spacing: 10) {
+                        if review.status == .reviewing { ProgressView().tint(Palette.forest) }
+                        else { Image(systemName: review.leaves > 0 ? "leaf.fill" : "info.circle") }
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(review.title).font(.system(size: 12, weight: .bold, design: .monospaced))
+                            Text("\(review.habitat.title) · tap for details").font(.system(size: 10))
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right").font(.caption.bold())
+                    }.padding(12).frame(maxWidth: .infinity, minHeight: 44)
+                        .pixelPanel(Palette.paper)
+                }.buttonStyle(.plain)
+            }
             if let food = store.selectedFood {
                 HStack(spacing: 8) {
                     PixelSprite(sprite: GameSprite(rawValue: food.id) ?? .apple, size: 28)
@@ -139,7 +123,7 @@ struct ContentView: View {
                     VStack(spacing: 6) {
                         Image(systemName: "camera.fill").font(.system(size: 29, weight: .bold))
                         Text("RECYCLE").font(.system(size: 11, weight: .heavy)).tracking(1)
-                        Text(store.isDeveloperMode ? "+\(store.developer.actionReward) preview" : (store.isDemoRecycling ? "Demo · +20 leaves" : "AI photo review"))
+                        Text(store.isDeveloperMode ? (store.isDemoRecycling ? "+\(store.developer.actionReward) preview" : "Actual · preview") : (store.isDemoRecycling ? "Demo · +20 leaves" : "Actual AI review"))
                             .font(.system(size: 9, weight: .medium)).opacity(0.8)
                     }.frame(width: 76, height: 68)
                 }.buttonStyle(PixelButtonStyle())
@@ -164,6 +148,105 @@ struct ContentView: View {
         }.buttonStyle(.plain)
     }
 
+}
+
+private struct HabitatStatusControls: View {
+    let state: HabitatState
+    let selectHabitat: (HabitatKind) -> Void
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        HStack(spacing: 8) {
+            arrow(destination: state.habitat.previous, pointsLeft: true)
+            VStack(spacing: 8) {
+                Menu {
+                    ForEach(HabitatKind.allCases) { habitat in
+                        Button { selectHabitat(habitat) } label: {
+                            if habitat == state.habitat {
+                                Label(habitat.title, systemImage: "checkmark")
+                            } else { Text(habitat.title) }
+                        }
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Text(state.habitat.title.uppercased()).tracking(0.6)
+                            .lineLimit(1).minimumScaleFactor(0.75)
+                        Image(systemName: "chevron.down").font(.system(size: 9, weight: .heavy))
+                    }
+                    .font(.system(size: 12, weight: .heavy, design: .monospaced))
+                    .frame(maxWidth: .infinity, minHeight: 44)
+                    .contentShape(Rectangle())
+                }.buttonStyle(.plain)
+                    .accessibilityLabel("Change habitat. Current: \(state.habitat.title)")
+
+                HStack(spacing: 4) {
+                    Text(state.condition.title.uppercased()).font(.system(size: 9, weight: .bold, design: .monospaced))
+                        .lineLimit(1).minimumScaleFactor(0.75)
+                    Spacer(minLength: 2)
+                    Text("\(state.cleanedPercent)% cleaned")
+                        .font(.system(size: 10, weight: .medium, design: .monospaced)).monospacedDigit()
+                        .lineLimit(1).minimumScaleFactor(0.75)
+                }
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Rectangle().fill(Palette.forest.opacity(0.14))
+                        Rectangle().fill(conditionColor)
+                            .frame(width: geometry.size.width * state.cleanedFraction)
+                    }
+                }
+                .frame(height: 9)
+                .animation(reduceMotion ? nil : .easeInOut(duration: 0.35), value: state.cleanedFraction)
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("Habitat cleaned")
+                .accessibilityValue("\(state.cleanedPercent) percent")
+            }
+            .padding(.horizontal, 12).padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .pixelPanel(Palette.paper.opacity(0.94), shadow: false)
+            arrow(destination: state.habitat.next, pointsLeft: false)
+        }
+    }
+
+    @ViewBuilder
+    private func arrow(destination: HabitatKind?, pointsLeft: Bool) -> some View {
+        if let destination {
+            Button { selectHabitat(destination) } label: {
+                PixelHabitatArrow().fill(Palette.forest)
+                    .frame(width: 28, height: 28)
+                    .scaleEffect(x: pointsLeft ? -1 : 1, y: 1)
+                    .frame(width: 44, height: 52)
+                    .pixelPanel(Palette.paper.opacity(0.96))
+                    .contentShape(Rectangle())
+            }.buttonStyle(.plain)
+                .accessibilityLabel("\(pointsLeft ? "Previous" : "Next") habitat: \(destination.title)")
+        } else {
+            // Reserve the slot so the menu doesn't jump when an end is reached.
+            Color.clear.frame(width: 44, height: 52).allowsHitTesting(false).accessibilityHidden(true)
+        }
+    }
+
+    private var conditionColor: Color {
+        switch state.condition {
+        case .thriving, .littered: Palette.forest
+        case .tarnished: Color(red: 0.55, green: 0.39, blue: 0.14)
+        case .polluted: Palette.coral
+        }
+    }
+}
+
+private struct PixelHabitatArrow: Shape {
+    func path(in rect: CGRect) -> Path {
+        let rows = ["0001000", "0001100", "1111110", "1111111", "1111110", "0001100", "0001000"]
+        var path = Path()
+        for (y, row) in rows.enumerated() {
+            for (x, cell) in row.enumerated() where cell == "1" {
+                path.addRect(CGRect(x: rect.minX + CGFloat(x) * rect.width / 7,
+                                    y: rect.minY + CGFloat(y) * rect.height / 7,
+                                    width: rect.width / 7, height: rect.height / 7))
+            }
+        }
+        return path
+    }
 }
 
 private enum HabitatPanel: String, Identifiable {

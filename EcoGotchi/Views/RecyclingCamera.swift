@@ -26,7 +26,7 @@ final class RecyclingCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDe
         for name in [AVCaptureSession.wasInterruptedNotification, AVCaptureSession.runtimeErrorNotification] {
             observers.append(NotificationCenter.default.addObserver(forName: name, object: session, queue: .main) { [weak self] _ in
                 self?.stop()
-                self?.message = "The camera was interrupted. Start a fresh capture to keep the three steps together."
+                self?.message = "The camera was interrupted. Start a fresh capture to keep both photos together."
                 self?.interruptionCount += 1
             })
         }
@@ -97,7 +97,8 @@ final class RecyclingCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDe
         message = nil
         onPhoto = completion
         let settings = AVCapturePhotoSettings(format: [AVVideoCodecKey: AVVideoCodecType.jpeg])
-        settings.photoQualityPrioritization = .balanced
+        // Small recognition photos benefit more from prompt delivery than extra processing.
+        settings.photoQualityPrioritization = .speed
         pendingID = settings.uniqueID
         capturedAt = Date()
         queue.async { [weak self] in

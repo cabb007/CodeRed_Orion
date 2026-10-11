@@ -28,6 +28,13 @@ enum HabitatCondition: String, CaseIterable, Identifiable {
 enum HabitatKind: String, Codable, CaseIterable, Identifiable {
     case grove, ocean, snow
     var id: String { rawValue }
+    var previous: Self? { neighbor(offset: -1) }
+    var next: Self? { neighbor(offset: 1) }
+    private func neighbor(offset: Int) -> Self? {
+        let habitats = Self.allCases
+        guard let index = habitats.firstIndex(of: self), habitats.indices.contains(index + offset) else { return nil }
+        return habitats[index + offset]
+    }
     var title: String {
         switch self { case .grove: "Willow Grove"; case .ocean: "Coral Cove"; case .snow: "Snow Glade" }
     }
@@ -64,24 +71,25 @@ enum HabitatKind: String, Codable, CaseIterable, Identifiable {
 struct HabitatAnimal: Identifiable {
     let id: String
     let name: String
+    let pettingSound: String
     let emoji: String
     let detail: String
     let requiredActions: Int
     var habitat: HabitatKind = .grove
 
     static let all: [HabitatAnimal] = [
-        .init(id: "pip", name: "Pip", emoji: "🐣", detail: "Your very first woodland friend.", requiredActions: 0),
-        .init(id: "fern", name: "Fern", emoji: "🐸", detail: "A little frog with a big love for clean ponds.", requiredActions: 1),
-        .init(id: "clover", name: "Clover", emoji: "🐰", detail: "Always looking for a peaceful patch of grass.", requiredActions: 3),
-        .init(id: "maple", name: "Maple", emoji: "🦊", detail: "A shy visitor who stays when the grove feels like home.", requiredActions: 6),
-        .init(id: "bubbles", name: "Bubbles", emoji: "🐠", detail: "A tiny clownfish with a big sense of adventure.", requiredActions: 0, habitat: .ocean),
-        .init(id: "shelly", name: "Shelly", emoji: "🐢", detail: "A gentle sea turtle who loves a healthy reef.", requiredActions: 1, habitat: .ocean),
-        .init(id: "inky", name: "Inky", emoji: "🐙", detail: "Eight arms, endless hugs.", requiredActions: 3, habitat: .ocean),
-        .init(id: "fin", name: "Fin", emoji: "🐬", detail: "A playful dolphin who follows the bubbles.", requiredActions: 6, habitat: .ocean),
-        .init(id: "waddles", name: "Waddles", emoji: "🐧", detail: "Your cheerful guide to the snowy glade.", requiredActions: 0, habitat: .snow),
-        .init(id: "flurry", name: "Flurry", emoji: "🦊", detail: "A fluffy arctic fox with warm little paws.", requiredActions: 1, habitat: .snow),
-        .init(id: "pebble", name: "Pebble", emoji: "🦭", detail: "A round seal who loves a cozy snowbank.", requiredActions: 3, habitat: .snow),
-        .init(id: "snowdrop", name: "Snowdrop", emoji: "🐇", detail: "A snow hare with springy feet and a soft heart.", requiredActions: 6, habitat: .snow)
+        .init(id: "pip", name: "Pip", pettingSound: "chirp!", emoji: "🐣", detail: "Your very first woodland friend.", requiredActions: 0),
+        .init(id: "fern", name: "Fern", pettingSound: "ribbit!", emoji: "🐸", detail: "A little frog with a big love for clean ponds.", requiredActions: 1),
+        .init(id: "clover", name: "Clover", pettingSound: "purr!", emoji: "🐰", detail: "Always looking for a peaceful patch of grass.", requiredActions: 3),
+        .init(id: "maple", name: "Maple", pettingSound: "yip!", emoji: "🦊", detail: "A shy visitor who stays when the grove feels like home.", requiredActions: 6),
+        .init(id: "bubbles", name: "Bubbles", pettingSound: "blub!", emoji: "🐠", detail: "A tiny clownfish with a big sense of adventure.", requiredActions: 0, habitat: .ocean),
+        .init(id: "shelly", name: "Shelly", pettingSound: "peep!", emoji: "🐢", detail: "A gentle sea turtle who loves a healthy reef.", requiredActions: 1, habitat: .ocean),
+        .init(id: "inky", name: "Inky", pettingSound: "pop!", emoji: "🐙", detail: "Eight arms, endless hugs.", requiredActions: 3, habitat: .ocean),
+        .init(id: "fin", name: "Fin", pettingSound: "click!", emoji: "🐬", detail: "A playful dolphin who follows the bubbles.", requiredActions: 6, habitat: .ocean),
+        .init(id: "waddles", name: "Waddles", pettingSound: "honk!", emoji: "🐧", detail: "Your cheerful guide to the snowy glade.", requiredActions: 0, habitat: .snow),
+        .init(id: "flurry", name: "Flurry", pettingSound: "yip!", emoji: "🦊", detail: "A fluffy arctic fox with warm little paws.", requiredActions: 1, habitat: .snow),
+        .init(id: "pebble", name: "Pebble", pettingSound: "arf!", emoji: "🦭", detail: "A round seal who loves a cozy snowbank.", requiredActions: 3, habitat: .snow),
+        .init(id: "snowdrop", name: "Snowdrop", pettingSound: "purr!", emoji: "🐇", detail: "A snow hare with springy feet and a soft heart.", requiredActions: 6, habitat: .snow)
     ]
 }
 
@@ -241,6 +249,8 @@ struct HabitatState: Codable {
     }
 
     var health: Int { max(0, 100 - litter * 15) }
+    var cleanedFraction: Double { Double(6 - min(6, max(0, litter))) / 6 }
+    var cleanedPercent: Int { Int((cleanedFraction * 100).rounded()) }
     var condition: HabitatCondition {
         switch litter {
         case ...0: .thriving
@@ -295,6 +305,14 @@ struct HabitatSession {
 
     var isDeveloperMode: Bool { liveSnapshot != nil }
     var persistedState: HabitatState { liveSnapshot ?? state }
+
+    // A real scan may finish while the user is trying developer preview.
+    mutating func updateSavedGame(_ update: (inout HabitatState) -> Void) {
+        if var live = liveSnapshot {
+            update(&live)
+            liveSnapshot = live
+        } else { update(&state) }
+    }
 
     mutating func beginPreview() {
         guard liveSnapshot == nil else { return }

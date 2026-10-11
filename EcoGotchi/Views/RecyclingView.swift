@@ -14,14 +14,10 @@ struct RecyclingView: View {
     @State private var draft = RecyclingCaptureDraft()
     @State private var showSettings = false
     @State private var inspecting: RecyclingCaptureStep?
-    @State private var configured = VerificationConnection.isConfigured
-    @State private var result: RecyclingAssessment?
+    @State private var configured = RecyclingReviewProvider.current.isConfigured
     @State private var completedPreview = false
     @State private var completedDemo = false
     @State private var scannedStep: RecyclingCaptureStep?
-    @State private var scanningStep: RecyclingCaptureStep?
-    @State private var scanningPhoto: UIImage?
-    @State private var scanProgress = 0.0
     @State private var flashOpacity = 0.0
     @State private var error: String?
     @State private var checking = false
@@ -29,31 +25,38 @@ struct RecyclingView: View {
     @State private var earnedLeaves = 0
     @State private var clearedLitter = 0
     @State private var alreadyRewarded = false
-    @State private var useTimer = true
-    @State private var countdown = 0
     @State private var reviewTask: Task<Void, Never>?
-    @State private var timerTask: Task<Void, Never>?
     @State private var scanTask: Task<Void, Never>?
-    @State private var captureScanTask: Task<Void, Never>?
 
+    private var result: RecyclingAssessment? { store.scanReview?.assessment }
+    private var displayedLeaves: Int { store.scanReview?.leaves ?? earnedLeaves }
+    private var displayedCleanup: Int { store.scanReview?.cleanup ?? clearedLitter }
+    private var wasAlreadyRewarded: Bool { store.scanReview?.alreadyRewarded ?? alreadyRewarded }
+    private var reviewIsPreview: Bool {
+        if let review = store.scanReview { return review.previewID != nil }
+        return store.isDeveloperMode
+    }
     private var hasResult: Bool { result != nil || completedPreview || completedDemo }
     private var sampleMode: Bool { store.isDeveloperMode && useSamplePhotos }
-    private var autoAccept: Bool { store.isDemoRecycling || store.isDeveloperMode }
+    private var autoAccept: Bool { store.recyclingMode.automaticallyAccepts(samplePhotos: sampleMode) }
     private var canCapture: Bool { autoAccept || configured }
-    private var captureBusy: Bool { camera.capturing || countdown > 0 || scannedStep != nil || scanningStep != nil }
+    private var captureBusy: Bool { camera.capturing }
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    if store.isDeveloperMode {
-                        Text("DEVELOPER PREVIEW · simulated review, no uploads")
+                    if reviewIsPreview {
+                        Text(store.scanReview == nil && (autoAccept || showRewardPreview)
+                             ? "DEVELOPER PREVIEW · simulated review, no uploads"
+                             : "DEVELOPER PREVIEW · Actual AI review, temporary rewards")
                             .font(.caption2.bold()).padding(10).pixelPanel(Palette.gold)
-                    } else if store.isDemoRecycling {
+                    } else if store.scanReview == nil && store.isDemoRecycling {
                         Label("Demo · auto-accept on", systemImage: "sparkles")
                             .font(.caption.bold()).padding(10).pixelPanel(Palette.sage)
                     }
-                    if hasResult { reviewResult }
+                    if let review = store.scanReview, review.status != .finished { ongoingReview(review) }
+                    else if hasResult { reviewResult }
                     else if !canCapture { connectionPrompt }
                     else if draft.isComplete { selectedPhotos }
                     else { captureStep }
@@ -69,7 +72,8 @@ struct RecyclingView: View {
                 }
             }
             .safeAreaInset(edge: .bottom, spacing: 0) {
-                if !hasResult && canCapture { challengeFooter }
+                if let review = store.scanReview, review.status != .finished { reviewFooter(review) }
+                else if !hasResult && canCapture { challengeFooter }
             }
             .navigationTitle(hasResult ? "Your recycling reward" : (autoAccept ? "Recycling scan" : "Recycling check"))
             .navigationBarTitleDisplayMode(.inline)
@@ -78,7 +82,7 @@ struct RecyclingView: View {
                     Button { camera.stop(); showSettings = true } label: {
                         Image(systemName: "gearshape").frame(width: 44, height: 44)
                     }.accessibilityLabel("Scan settings")
-                        .disabled(checking || captureBusy || (!draft.frames.isEmpty && !draft.isComplete))
+                        .disabled(store.scanReview != nil || checking || captureBusy || (!draft.frames.isEmpty && !draft.isComplete))
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button { dismiss() } label: {
@@ -90,32 +94,29 @@ struct RecyclingView: View {
             .task {
                 guard !prepared else { return }
                 prepared = true
-                if store.isDeveloperMode && showRewardPreview {
+                if store.scanReview == nil && store.isDeveloperMode && showRewardPreview {
                     earnedLeaves = store.developer.actionReward
                     completedPreview = true
                 } else if launchCameraOnOpen { startCameraIfNeeded() }
             }
             .sheet(isPresented: $showSettings, onDismiss: {
-                configured = VerificationConnection.isConfigured
+                configured = RecyclingReviewProvider.current.isConfigured
                 startCameraIfNeeded()
                 finishDemoIfReady()
             }) { VerificationSettingsView() }
             .sheet(item: $inspecting) { step in photoDetail(step) }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
-                    cancelTimer()
                     cancelScanFeedback()
                     camera.stop()
                     discardIncompleteCapture()
                 } else if phase == .active { startCameraIfNeeded(); finishDemoIfReady() }
             }
             .onChange(of: camera.interruptionCount) { _, _ in
-                cancelTimer()
                 cancelScanFeedback()
                 discardIncompleteCapture()
             }
             .onDisappear {
-                cancelTimer()
                 cancelScanFeedback()
                 camera.stop()
                 reviewTask?.cancel()
@@ -127,9 +128,9 @@ struct RecyclingView: View {
         VStack(alignment: .leading, spacing: 18) {
             PixelSprite(sprite: .leaf, size: 70)
             Text("Let’s connect Gemini").font(.title2.bold())
-            Text("One camera session. Three photos. One AI review. Connect your EcoGotchi server to start earning leaves from reviewed actions.")
+            Text("Take two photos and send them for one AI review. Add your Gemini key to review directly over Wi-Fi or cellular, without your Mac.")
             Button("Set up AI connection") { showSettings = true }.buttonStyle(PixelButtonStyle())
-            Text("Your Gemini key stays on the server. Setup instructions are in the project’s server folder.")
+            Text("Your key stays in this iPhone’s Keychain. You can also choose an existing review server in settings.")
                 .font(.caption).foregroundStyle(.secondary)
         }.padding(.vertical, 24)
     }
@@ -154,7 +155,7 @@ struct RecyclingView: View {
                 Text(step.title).font(.title2.bold())
                 Text(autoAccept ? step.demoInstruction : step.instruction).font(.subheadline).foregroundStyle(.secondary)
                 if step == .bin && !autoAccept {
-                    Text("No markings? You can still capture it. If we can’t tell what it accepts, the review will explain why it couldn’t award leaves.")
+                    Text("No readable label needed. We look for the bin’s design, opening, and recycling clues.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
                 ZStack {
@@ -174,30 +175,14 @@ struct RecyclingView: View {
                             }.foregroundStyle(.white)
                         }
                     }
-                    if countdown > 0 {
-                        Text("\(countdown)").font(.system(size: 72, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.white).padding(24).background(.black.opacity(0.55), in: Circle())
-                            .accessibilityLabel("Capturing in \(countdown) seconds")
-                    }
-                    if let scanningStep, let scanningPhoto {
-                        GeometryReader { photo in
-                            Image(uiImage: scanningPhoto).resizable().scaledToFill()
-                                .frame(width: photo.size.width, height: photo.size.height).clipped()
-                        }
-                        ScanInProgressOverlay(step: scanningStep, progress: scanProgress, simulated: autoAccept)
-                    }
                 }.frame(height: 300).clipShape(PixelFrame())
-                if step == .disposal && !sampleMode {
-                    Toggle("3-second shutter timer", isOn: $useTimer)
-                        .font(.subheadline).disabled(captureBusy)
-                }
                 if let cameraMessage = camera.message, !sampleMode {
                     Text(cameraMessage).font(.subheadline).foregroundStyle(.red)
                 }
                 if let error { Text(error).font(.subheadline).foregroundStyle(.red) }
-                Label(autoAccept ? "Photos stay on your phone. No connection needed." : "Only your 3 captures are kept. Review happens at the end.", systemImage: "lock")
+                Label(autoAccept ? "Photos stay on your phone. No connection needed." : "Only your 2 captures are kept. Review happens at the end.", systemImage: "lock")
                     .font(.caption).foregroundStyle(.secondary)
-                Text(autoAccept ? "Finish all 3 scans to collect your leaves automatically." : "Finish within 10 minutes. Check what this bin accepts before depositing anything; ask the site staff if unsure.")
+                Text(autoAccept ? "Finish both scans to collect your leaves automatically." : "Finish within 10 minutes. Check what this bin accepts before depositing anything; ask the site staff if unsure.")
                     .font(.caption).foregroundStyle(.secondary)
             }
         }
@@ -206,8 +191,8 @@ struct RecyclingView: View {
     private var selectedPhotos: some View {
         VStack(alignment: .leading, spacing: 16) {
             progress
-            Text(autoAccept ? "All 3 photos captured!" : "Ready for one review").font(.title2.bold())
-            Text(autoAccept ? "Your demo scan is complete. Collect your leaves and watch the habitat recover." : "Check that the bin is clear and the last photo shows the item entering it. Any sorting icons or nearby signs should be visible. Tap a photo to look closer.")
+            Text(autoAccept ? "Both photos captured!" : "Ready for one review").font(.title2.bold())
+            Text(autoAccept ? "Your demo scan is complete. Collect your leaves and watch the habitat recover." : "Check that the bin and item are clear. A readable label is optional. Tap either photo to look closer.")
                 .font(.subheadline).foregroundStyle(.secondary)
             HStack(alignment: .top, spacing: 10) {
                 ForEach(draft.frames, id: \.step) { frame in
@@ -224,15 +209,17 @@ struct RecyclingView: View {
                 }
             }
             if !autoAccept {
-                Text("Send for review uploads these 3 photos together to your EcoGotchi server and Google Gemini. The live camera preview stays on your phone. Avoid faces and personal details.")
+                Text(RecyclingReviewProvider.current.uploadNotice)
                     .font(.caption).foregroundStyle(.secondary)
-                Text("Accepted actions earn 10–30 leaves based on material. Unclear or rejected reviews earn 0. AI assesses visible evidence; it can’t prove recycling happened.")
+                Text("Likely recycling matches earn 10–30 leaves based on material. Unclear or rejected reviews earn 0. Local collection rules can differ; disposal is not verified.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let error { Text(error).font(.subheadline).foregroundStyle(.red) }
             if checking {
-                HStack(spacing: 10) { ProgressView(); Text(autoAccept ? "Adding your leaves…" : "Reviewing all 3 photos…").font(.subheadline) }
-                    .accessibilityElement(children: .combine)
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text(autoAccept ? "Adding your leaves…" : "Starting review…").font(.subheadline)
+                }
             }
         }
     }
@@ -254,22 +241,62 @@ struct RecyclingView: View {
                 }.buttonStyle(PixelButtonStyle())
                     .disabled(captureBusy || camera.starting)
             }
-            if !draft.frames.isEmpty {
+            if checking && !autoAccept {
+                Button("Cancel review") { reviewTask?.cancel() }
+                    .font(.subheadline).frame(minHeight: 44)
+            } else if !draft.frames.isEmpty {
                 Button("Start over") { startAgain() }.font(.subheadline).frame(minHeight: 44)
                     .disabled(checking || captureBusy)
             }
         }.padding(.horizontal, 20).padding(.vertical, 12).background(Palette.cream)
     }
 
+    private func ongoingReview(_ review: ScanReview) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(review.status == .reviewing ? "You’re free to play!" : "Let’s try that again")
+                .font(.title2.bold())
+            Text("Scan for \(review.habitat.title)").font(.subheadline.bold())
+            if review.status == .reviewing {
+                TimelineView(.periodic(from: review.startedAt, by: 1)) { context in
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("\(review.title) · \(max(0, Int(context.date.timeIntervalSince(review.startedAt))))s")
+                            .font(.subheadline).monospacedDigit()
+                    }
+                }
+                Text("Return to your habitat while Gemini reviews your bin and item. Approved leaves will appear automatically, and you can tap the review banner for the result.")
+                    .font(.subheadline)
+                Text("Keep EcoGotchi open while you play. Leaving the app may pause the review; closing the app completely discards unfinished scans.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                Text(review.message ?? "The review couldn’t finish. No leaves were added.")
+                    .font(.subheadline).foregroundStyle(.red)
+                Text("Your two photos are still here for a retry. Take new photos if they’re more than 10 minutes old.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }.padding(.vertical, 18)
+    }
+
+    private func reviewFooter(_ review: ScanReview) -> some View {
+        VStack(spacing: 4) {
+            Button("Back to my habitat") { dismiss() }
+                .buttonStyle(PixelButtonStyle()).frame(maxWidth: .infinity)
+            if review.status == .reviewing {
+                Button(review.cancelling ? "Cancelling…" : "Cancel review") { store.cancelScanReview() }
+                    .disabled(review.cancelling).frame(minHeight: 44)
+            } else {
+                Button("Retry review") { store.retryScanReview() }.frame(minHeight: 44)
+                Button("Take new photos") { startAgain() }.frame(minHeight: 44)
+            }
+        }.padding(.horizontal, 20).padding(.vertical, 12).background(Palette.cream)
+    }
+
     private var captureButtonTitle: String {
-        if countdown > 0 { return "Capturing in \(countdown)…" }
-        if scanningStep != nil { return autoAccept ? "Scanning…" : "Preparing photo…" }
-        if scannedStep != nil { return "Scan complete!" }
         if camera.capturing { return "Capturing…" }
         if camera.starting { return "Opening camera…" }
         if !sampleMode && !camera.ready { return camera.message == nil ? "Start camera" : "Try camera again" }
         if sampleMode { return "Capture sample \(draft.nextStep?.title.lowercased() ?? "photo")" }
-        return draft.nextStep == .disposal && useTimer ? "Capture disposal in 3 seconds" : "Capture \(draft.nextStep?.title.lowercased() ?? "photo")"
+        return "Capture \(draft.nextStep?.title.lowercased() ?? "photo")"
     }
 
     private func photoDetail(_ step: RecyclingCaptureStep) -> some View {
@@ -288,7 +315,7 @@ struct RecyclingView: View {
                 .frame(maxWidth: .infinity).padding(.top, 16)
             Text(resultTitle).font(.title2.bold())
             if let result { Text("\(result.itemName) · \(result.material.rawValue.capitalized)").font(.headline) }
-            Label(alreadyRewarded ? "This action already earned leaves" : "\(earnedLeaves) leaves\(completedPreview ? " (preview)" : " earned")", systemImage: "leaf.fill")
+            Label(wasAlreadyRewarded ? "This action already earned leaves" : "\(displayedLeaves) leaves\(reviewIsPreview ? " (preview)" : " earned")", systemImage: "leaf.fill")
                 .font(.headline).padding(14).frame(maxWidth: .infinity, alignment: .leading).pixelPanel(Palette.sage)
             if let result {
                 Text(result.explanation).font(.subheadline)
@@ -298,39 +325,45 @@ struct RecyclingView: View {
                     Text("Bin evidence: \(result.labelEvidence)").font(.caption).foregroundStyle(.secondary)
                 }.padding(14).pixelPanel(Palette.paper)
                 if result.needsBinGuidance {
-                    Text("A missing label doesn’t mean you recycled incorrectly. We need a visible clue about what this bin accepts, such as a material icon or a nearby sorting sign. Ask the site staff if none are available.")
+                    Text("Show the whole bin and opening in good light. A recycling symbol or sorting station can help; a plain wastebasket may be too ambiguous.")
                         .font(.subheadline)
                 }
                 Text(result.limitation).font(.caption).foregroundStyle(.secondary)
+                if reviewIsPreview {
+                    Text("Actual AI review. Rewards only affect this preview; your saved habitat is unchanged.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
             } else if completedDemo {
-                Text("All three photos were automatically accepted in demo mode. Your leaves and habitat progress are saved on this phone.")
+                Text("Both photos were automatically accepted in demo mode. Your leaves and habitat progress are saved on this phone.")
                     .font(.subheadline)
             } else {
                 Text(showRewardPreview ? "This celebration is a preview. Your habitat hasn’t changed." : "Simulated approval. Only your temporary habitat changed.")
                     .font(.subheadline)
             }
-            if clearedLitter > 0 { Text("\(clearedLitter) piece(s) of virtual litter cleared.").font(.caption) }
-            if result?.status != .approved && !completedPreview && !completedDemo {
-                Button("Start a new capture") { startAgain() }.buttonStyle(PixelButtonStyle())
+            if displayedCleanup > 0 { Text("\(displayedCleanup) piece(s) of virtual litter cleared.").font(.caption) }
+            if let review = store.scanReview {
+                Text("Reviewed for \(review.habitat.title).").font(.caption).foregroundStyle(.secondary)
+                Button("Scan another item") { startAgain() }.buttonStyle(PixelButtonStyle())
             }
-            Button("Back to my habitat") { dismiss() }.buttonStyle(PixelButtonStyle(secondary: earnedLeaves == 0))
+            Button("Back to my habitat") { store.dismissScanReview(); dismiss() }
+                .buttonStyle(PixelButtonStyle(secondary: displayedLeaves == 0))
         }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var resultTitle: String {
         if completedPreview { return "A little greener!" }
         if completedDemo { return alreadyRewarded ? "Already collected!" : "Scan complete!" }
-        if result?.needsBinGuidance == true { return "Bin rules unclear" }
+        if result?.needsBinGuidance == true { return "Bin unclear" }
         switch result?.status {
-        case .approved: return alreadyRewarded ? "Already added to your journal" : "AI review passed!"
-        case .rejected: return "This action didn’t qualify"
+        case .approved: return wasAlreadyRewarded ? "Already added to your journal" : "Looks like a recycling match!"
+        case .rejected: return "This item didn’t qualify"
         default: return "We couldn’t confirm enough"
         }
     }
 
     private func startCameraIfNeeded() {
         guard !sampleMode, !(store.isDeveloperMode && showRewardPreview), canCapture,
-              !hasResult, !draft.isComplete, !showSettings, scenePhase == .active else { return }
+              store.scanReview == nil, !hasResult, !draft.isComplete, !showSettings, scenePhase == .active else { return }
         camera.start()
     }
 
@@ -340,30 +373,10 @@ struct RecyclingView: View {
         if sampleMode {
             if let image = sampleImage(for: step) { accept(image, at: Date()) }
         } else if !camera.ready { camera.start() }
-        else if step == .disposal && useTimer {
-            countdown = 3
-            timerTask = Task { @MainActor in
-                do {
-                    for value in stride(from: 3, through: 1, by: -1) {
-                        countdown = value
-                        try await Task.sleep(for: .seconds(1))
-                    }
-                    try Task.checkCancellation()
-                    countdown = 0
-                    camera.capture { accept($0, at: $1) }
-                } catch { countdown = 0 }
-            }
-        } else { camera.capture { accept($0, at: $1) } }
+        else { camera.capture { accept($0, at: $1) } }
     }
 
-    private func cancelTimer() { timerTask?.cancel(); timerTask = nil; countdown = 0 }
-
     private func cancelScanFeedback() {
-        captureScanTask?.cancel()
-        captureScanTask = nil
-        scanningStep = nil
-        scanningPhoto = nil
-        scanProgress = 0
         scanTask?.cancel()
         scanTask = nil
         scannedStep = nil
@@ -381,10 +394,9 @@ struct RecyclingView: View {
             do {
                 try await Task.sleep(for: .milliseconds(80))
                 withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) { flashOpacity = 0 }
-                try await Task.sleep(for: .milliseconds(1_220))
+                try await Task.sleep(for: .milliseconds(570))
                 try Task.checkCancellation()
                 withAnimation(reduceMotion ? nil : .easeOut(duration: 0.2)) { scannedStep = nil }
-                finishDemoIfReady()
             } catch { }
         }
     }
@@ -406,46 +418,32 @@ struct RecyclingView: View {
         guard let step = draft.nextStep, !hasResult else { return }
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
-        let scale = min(1, 1200 / max(image.size.width, image.size.height))
+        let quickReview = !autoAccept && RecyclingReviewProvider.current == .direct
+            && GeminiDirectConnection.savedModel == GeminiDirectConnection.defaultModel
+        // Preserve bin text; reduce upload size for the item photo.
+        let smallerUpload = quickReview && step != .bin
+        let longestEdge: CGFloat = smallerUpload ? 960 : 1200
+        let scale = min(1, longestEdge / max(image.size.width, image.size.height))
         let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
         let resized = UIGraphicsImageRenderer(size: size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
         }
-        guard let jpeg = resized.jpegData(compressionQuality: 0.7) else {
+        guard let jpeg = resized.jpegData(compressionQuality: smallerUpload ? 0.65 : 0.7) else {
             error = "That photo couldn’t be prepared. Try again."; return
         }
-        scanningStep = step
-        scanningPhoto = resized
-        scanProgress = 0
-        captureScanTask = Task { @MainActor in
-            do {
-                // A short presentation effect; demo mode does not classify the image.
-                for frame in 1...24 {
-                    try await Task.sleep(for: .milliseconds(55))
-                    withAnimation(reduceMotion ? nil : .linear(duration: 0.055)) {
-                        scanProgress = Double(frame) / 24
-                    }
-                }
-                try Task.checkCancellation()
-                try draft.capture(jpeg: jpeg, at: date, allowRepeatedImages: autoAccept)
-                scanningStep = nil
-                scanningPhoto = nil
-                if draft.isComplete { camera.stop() }
-                celebrateCapture(step)
-            } catch is CancellationError { }
-            catch {
-                scanningStep = nil
-                scanningPhoto = nil
-                self.error = error.localizedDescription
-            }
-        }
+        do {
+            // Capture advances immediately; feedback never locks the next shutter.
+            try draft.capture(jpeg: jpeg, at: date, allowRepeatedImages: autoAccept)
+            if draft.isComplete { camera.stop() }
+            celebrateCapture(step)
+            finishDemoIfReady()
+        } catch { self.error = error.localizedDescription }
     }
 
     private func sampleImage(for step: RecyclingCaptureStep) -> UIImage? {
         switch step {
         case .bin: UIImage(named: "GroveThriving")
         case .item: GameSprite.images[.can]
-        case .disposal: UIImage(named: "GroveTarnished")
         }
     }
 
@@ -454,7 +452,7 @@ struct RecyclingView: View {
         error = nil
         defer { checking = false }
         guard !Task.isCancelled, draft.isComplete else { return }
-        if store.isDeveloperMode {
+        if store.isDeveloperMode && autoAccept {
             let before = store.state.litter
             earnedLeaves = store.developer.actionReward
             store.record(item: "Simulated recycling review")
@@ -474,26 +472,19 @@ struct RecyclingView: View {
                 draft.restart()
                 return
             }
-            let review = try await VerificationConnection.current().assess(draft.submission())
-            try Task.checkCancellation()
-            let before = store.state.litter
-            if review.status == .approved {
-                let applied = store.recordReviewedAction(review)
-                earnedLeaves = applied ? review.leaves : 0
-                alreadyRewarded = !applied
-                clearedLitter = before - store.state.litter
-            }
-            result = review
+            let provider = RecyclingReviewProvider.current
+            try store.startScanReview(draft.submission()) { try await provider.assess($0) }
             draft.restart()
-        } catch is CancellationError { }
+        } catch is CancellationError {
+            error = "Review cancelled. Your photos are ready to retry; no leaves were added."
+        }
         catch { self.error = error.localizedDescription }
     }
 
     private func startAgain() {
-        cancelTimer()
+        store.dismissScanReview()
         cancelScanFeedback()
         draft.restart()
-        result = nil
         completedDemo = false
         completedPreview = false
         earnedLeaves = 0

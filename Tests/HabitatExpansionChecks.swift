@@ -4,6 +4,13 @@ import Foundation
 struct HabitatExpansionChecks {
     static func main() throws {
         let start = Date(timeIntervalSince1970: 1_000_000)
+        let habitats = HabitatKind.allCases
+        for (index, habitat) in habitats.enumerated() {
+            precondition(habitat.previous == (index > 0 ? habitats[index - 1] : nil))
+            precondition(habitat.next == (index + 1 < habitats.count ? habitats[index + 1] : nil))
+            if let next = habitat.next { precondition(next.previous == habitat) }
+            if let previous = habitat.previous { precondition(previous.next == habitat) }
+        }
         precondition(HabitatAnimal.all.count == 12 && Set(HabitatAnimal.all.map(\.id)).count == 12)
         precondition(Decoration.all.count == 12 && Set(Decoration.all.map(\.id)).count == 12)
         for habitat in HabitatKind.allCases {

@@ -34,10 +34,16 @@ struct HabitatStateChecks {
         for (litter, expected) in conditions.enumerated() {
             state.litter = litter
             precondition(state.condition == expected, "Wrong condition for \(litter) litter")
+            precondition(state.cleanedPercent == [100, 83, 67, 50, 33, 17, 0][litter], "Cleaned percentage must span the full litter capacity")
+            precondition((0...1).contains(state.cleanedFraction))
         }
         precondition(state.residentAnimals.count == 1 && state.unlockedAnimals.count == 4, "Pollution makes animals shelter without deleting collection")
         state.litter = 4
         precondition(state.residentAnimals.count == 4, "Animals return when the habitat recovers")
+        state.litter = -1
+        precondition(state.cleanedFraction == 1 && state.cleanedPercent == 100)
+        state.litter = 7
+        precondition(state.cleanedFraction == 0 && state.cleanedPercent == 0, "Progress rendering stays within the bar for invalid legacy values")
 
         var timing = HabitatState(litter: 0, lastPollution: start)
         timing.advance(to: start.addingTimeInterval(21_600))

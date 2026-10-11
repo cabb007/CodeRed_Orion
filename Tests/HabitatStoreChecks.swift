@@ -106,6 +106,7 @@ struct HabitatStoreChecks {
 
     static func main() throws {
         checkDemoRewards()
+        checkActualPreview()
         try checkDecorationLayouts()
         try checkExpandedShop()
         let defaults = MemoryDefaults(suiteName: "EcoGotchi.InMemoryChecks")!
@@ -197,15 +198,43 @@ struct HabitatStoreChecks {
         print("Store checks passed: reviewed rewards, replay protection, failure guards, preview isolation, purchases, timing, and restoration.")
     }
 
+    static func checkActualPreview() {
+        let defaults = MemoryDefaults(suiteName: "EcoGotchi.ActualPreview")!
+        let store = HabitatStore(defaults: defaults)
+        let original = store.state
+        let assessment = review()
+        precondition(!store.recordPreviewReviewedAction(assessment), "Preview receipts never mutate a live habitat")
+        store.beginDeveloperMode()
+        precondition(!store.recordPreviewReviewedAction(assessment), "Demo mode cannot claim Actual review rewards")
+        store.recyclingMode = .ai
+        store.developer.actionReward = 100
+        store.developer.cleanupPerAction = 6
+        precondition(store.recordPreviewReviewedAction(assessment))
+        precondition(store.state.points == original.points + 30 && store.state.litter == original.litter - 1,
+                     "Actual preview rewards follow the material policy, not simulated reward controls")
+        precondition(store.state.actions.last?.item.hasPrefix("[Preview]") == true)
+        precondition(!store.recordPreviewReviewedAction(assessment), "An Actual preview receipt cannot award twice")
+        precondition(!store.recordPreviewReviewedAction(review(status: .rejected)), "Rejected Actual reviews never earn preview leaves")
+        let reopened = HabitatStore(defaults: defaults)
+        precondition(reopened.state.points == original.points && reopened.state.actions.count == original.actions.count,
+                     "Actual preview rewards never overwrite the real save")
+        precondition(reopened.recyclingMode == .ai, "The chosen scan mode survives relaunch")
+        store.endDeveloperMode()
+        precondition(store.recyclingMode == .ai && store.state.points == original.points)
+        precondition(store.recordReviewedAction(review()), "Actual reviews can reward the live game after leaving preview")
+        print("Actual preview checks passed: mode persistence, real review policy, deduplication, and saved-game isolation.")
+    }
+
     static func checkDemoRewards() {
         let defaults = MemoryDefaults(suiteName: "EcoGotchi.DemoChecks")!
         let store = HabitatStore(defaults: defaults)
         precondition(store.isDemoRecycling, "The hackathon build starts in offline demo mode")
-        let frames = ["bin", "item", "disposal"].map {
+        let frames = ["bin", "item"].map {
             RecyclingPhoto(role: $0, source: "camera", mimeType: "image/jpeg", capturedAt: "2026-10-10T12:00:00Z", data: "demo-photo")
         }
         let submission = RecyclingSubmission(submissionId: UUID(), photos: frames)
-        precondition(!store.recordDemoAction(.init(submissionId: UUID(), photos: Array(frames.prefix(2)))), "Incomplete scans cannot award")
+        precondition(!store.recordDemoAction(.init(submissionId: UUID(), photos: Array(frames.prefix(1)))), "Incomplete scans cannot award")
+        precondition(!store.recordDemoAction(.init(submissionId: UUID(), photos: Array(frames.reversed()))), "Item-first scans cannot award")
         precondition(store.recordDemoAction(submission), "Complete demo scans award without AI")
         precondition(store.state.points == 20 && store.state.litter == 2 && store.state.unlockedAnimals.count == 2)
         precondition(store.state.actions.last?.isDemo == true && store.state.actions.last?.verificationID == nil)
@@ -228,7 +257,7 @@ struct HabitatStoreChecks {
                        material: RecycledMaterial = .aluminum) -> RecyclingAssessment {
         .init(submissionId: submissionID, receiptId: receiptID, reviewedAt: "2026-10-10T12:00:00.000Z", status: status,
               itemName: "Aluminum can", material: material, leaves: leaves, cleanup: cleanup,
-              explanation: "Can entering labeled bin", tip: "Follow this bin’s instructions.", labelEvidence: "Empty cans",
+              explanation: "Can matches the bin’s sorting instructions", tip: "Follow this bin’s instructions.", labelEvidence: "Empty cans",
               evidenceQuality: quality, verification: verification, limitation: "Visual review only")
     }
 }

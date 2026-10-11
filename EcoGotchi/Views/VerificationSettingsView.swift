@@ -4,6 +4,9 @@ struct VerificationSettingsView: View {
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.dismiss) private var dismiss
     @AppStorage("ecogotchi.scanSounds") private var scanSounds = true
+    @AppStorage(RecyclingReviewProvider.preferenceKey) private var provider = RecyclingReviewProvider.direct
+    @State private var apiKey = GeminiDirectConnection.savedKey
+    @State private var model = GeminiDirectConnection.savedModel
     @State private var address = VerificationConnection.savedURL
     @State private var token = VerificationConnection.savedToken
     @State private var error: String?
@@ -19,48 +22,27 @@ struct VerificationSettingsView: View {
                         ForEach(RecyclingMode.allCases) { mode in Text(mode.title).tag(mode) }
                     }.pickerStyle(.segmented).disabled(testing)
                     Text(store.isDemoRecycling
-                         ? "Demo automatically accepts all three photos, adds 20 leaves, and clears one piece of habitat trash. No server or AI connection needed."
-                         : "AI review sends the three photos to Gemini and awards leaves only after an approved review.")
+                         ? "Demo accepts the two photos automatically and adds 20 leaves. No internet needed."
+                         : "Actual reviews your two photos with Gemini. Only approved reviews earn leaves.")
                         .font(.subheadline)
                     Toggle("Scan sounds", isOn: $scanSounds)
                 } header: { Text("Scan experience") } footer: {
-                    Text("Success sounds respect your iPhone’s Silent Mode. Demo progress is saved; developer preview progress remains temporary.")
+                    Text("Sounds respect Silent Mode. Rewards in developer preview stay temporary, including Actual reviews.")
                 }
                 if !store.isDemoRecycling {
                     Section {
-                        TextField("https://your-server.example", text: $address)
-                            .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .accessibilityLabel("Review server address")
-                            .disabled(testing)
-                        if let directAddress = VerificationConnection.configuredDirectURL {
-                            Button("Use this Mac’s direct address") { address = directAddress }
-                                .disabled(testing)
-                        }
-                        SecureField("Server access token", text: $token)
-                            .textInputAutocapitalization(.never).autocorrectionDisabled()
-                            .disabled(testing)
-                    } header: { Text("Connect recycling review") } footer: {
-                        Text("Use the address and access token from your EcoGotchi server. The direct address bypasses .local name lookup and is specific to the Mac’s current network. Your Gemini API key stays on the server.")
-                    }
+                        Picker("AI connection", selection: $provider) {
+                            ForEach(RecyclingReviewProvider.allCases) { Text($0.title).tag($0) }
+                        }.pickerStyle(.segmented).disabled(testing)
+                        Text(provider == .direct
+                             ? "Connect straight to Gemini over Wi-Fi or cellular. Your Mac can be off."
+                             : "Connect through your existing EcoGotchi review server. A hosted HTTPS server also works away from your Mac.")
+                            .font(.subheadline)
+                    } header: { Text("Actual scans") }
+                    if provider == .direct { directSettings }
+                    else { serverSettings }
                     Section {
-                        Button {
-                            testing = true
-                            error = nil
-                            connectionMessage = nil
-                            connectionTask = Task { @MainActor in
-                                defer { testing = false }
-                                do {
-                                    let connection = try VerificationConnection(address: address, token: token)
-                                    let result = try await connection.testConnection()
-                                    try Task.checkCancellation()
-                                    try connection.save()
-                                    connectionMessage = result.reviewsRemaining > 0
-                                        ? "Connected and saved. Your server has \(result.reviewsRemaining) AI reviews left in its daily budget. Tap Done to continue."
-                                        : "Connected and saved, but the server’s daily AI review budget is used up. Try again later."
-                                } catch is CancellationError { }
-                                catch { self.error = error.localizedDescription }
-                            }
-                        } label: {
+                        Button(action: testAndSave) {
                             HStack {
                                 if testing { ProgressView() }
                                 Text(testing ? "Checking connection…" : "Save & test connection")
@@ -71,22 +53,103 @@ struct VerificationSettingsView: View {
                             Label(connectionMessage, systemImage: "checkmark.circle").foregroundStyle(Palette.forest)
                         }
                     } footer: {
-                        Text("Checks your server address and access token. No photos are sent and no Gemini tokens are used. This does not test Gemini’s photo review.")
+                        Text(provider == .direct
+                             ? "Checks the key and model without sending photos or generating an AI response. Photo review and available quota are checked when you submit a scan."
+                             : "Checks the server address and access token without sending photos or calling Gemini.")
                     }
                     Section {
-                        Text("When you tap Send for review, your three photos go to this server and Google Gemini. Avoid faces and personal information. Photos aren’t added to your photo library or saved by EcoGotchi’s server; the server keeps review results and photo fingerprints to prevent repeat rewards. Google’s own data terms apply.")
-                            .font(.subheadline)
-                        Link("Google Gemini data terms", destination: URL(string: "https://ai.google.dev/gemini-api/terms")!)
-                        Text("For a local demo, run the server on your Mac and connect it to your iPhone’s hotspot or the same trusted Wi-Fi. Use the .local address or the direct-address button. Allow EcoGotchi’s Local Network access. Local HTTP is unencrypted; use HTTPS for a hosted server.")
+                        Text(provider.uploadNotice).font(.subheadline)
+                        Text(provider == .direct
+                             ? "Submitted photos stay in memory while you return to your habitat. They are removed after a result or when you discard a failed scan; closing the app discards unfinished scans. This phone saves review results and photo fingerprints to prevent repeated rewards. It allows 30 review attempts per rolling 24 hours, including failures."
+                             : "EcoGotchi’s server keeps review results and photo fingerprints, but doesn’t save the photos. Server review limits apply.")
                             .font(.caption).foregroundStyle(.secondary)
-                    }
+                        Link("Google Gemini data terms", destination: URL(string: "https://ai.google.dev/gemini-api/terms")!)
+                    } header: { Text("Your photos") }
                 }
             }
             .navigationTitle("Scan settings").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }.tint(Palette.forest)
-            .onChange(of: address) { _, _ in connectionMessage = nil; error = nil }
-            .onChange(of: token) { _, _ in connectionMessage = nil; error = nil }
+            .onChange(of: address) { _, _ in clearMessages() }
+            .onChange(of: token) { _, _ in clearMessages() }
+            .onChange(of: apiKey) { _, _ in clearMessages() }
+            .onChange(of: model) { _, _ in clearMessages() }
+            .onChange(of: provider) { _, _ in clearMessages() }
+            .onChange(of: store.recyclingMode) { _, _ in clearMessages() }
             .onDisappear { connectionTask?.cancel() }
+    }
+
+    private var directSettings: some View {
+        Section {
+            SecureField("Gemini API key", text: $apiKey)
+                .textInputAutocapitalization(.never).autocorrectionDisabled().disabled(testing)
+            Link("Get a Gemini API key", destination: URL(string: "https://aistudio.google.com/api-keys")!)
+            Picker("Review speed", selection: $model) {
+                Text("Quick").tag(GeminiDirectConnection.defaultModel)
+                Text("Detailed").tag(GeminiDirectConnection.detailedModel)
+                if model != GeminiDirectConnection.defaultModel && model != GeminiDirectConnection.detailedModel {
+                    Text("Custom").tag(model)
+                }
+            }.disabled(testing)
+            Text("Quick uses a lighter model and smaller uploads. Detailed keeps more image detail for difficult items or small signs. Save below to apply.")
+                .font(.caption).foregroundStyle(.secondary)
+            DisclosureGroup("Advanced model settings") {
+                TextField(GeminiDirectConnection.defaultModel, text: $model)
+                    .textInputAutocapitalization(.never).autocorrectionDisabled().disabled(testing)
+                    .accessibilityLabel("Gemini model")
+            }
+            if !GeminiDirectConnection.savedKey.isEmpty {
+                Button("Remove saved key", role: .destructive) {
+                    do { try GeminiDirectConnection.removeKey(); apiKey = ""; clearMessages() }
+                    catch { self.error = error.localizedDescription }
+                }.disabled(testing)
+            }
+        } header: { Text("Your Gemini connection") } footer: {
+            Text("Enter the key once on this iPhone. It stays in Keychain and isn’t bundled with the app. This option is for your private hackathon build; use a hosted server before distributing the app with shared credentials.")
+        }
+    }
+
+    private var serverSettings: some View {
+        Section {
+            TextField("https://your-server.example", text: $address)
+                .keyboardType(.URL).textInputAutocapitalization(.never).autocorrectionDisabled()
+                .accessibilityLabel("Review server address").disabled(testing)
+            if let directAddress = VerificationConnection.configuredDirectURL {
+                Button("Use this Mac’s direct address") { address = directAddress }.disabled(testing)
+            }
+            SecureField("Server access token", text: $token)
+                .textInputAutocapitalization(.never).autocorrectionDisabled().disabled(testing)
+        } header: { Text("Review server") } footer: {
+            Text("No cable is required. A local server needs your Mac awake on the same Wi-Fi or hotspot, with Local Network access allowed. Use On iPhone above to remove the Mac dependency entirely. The Gemini key stays on the server in this mode.")
+        }
+    }
+
+    private func clearMessages() { connectionMessage = nil; error = nil }
+
+    private func testAndSave() {
+        guard !testing else { return }
+        testing = true
+        clearMessages()
+        connectionTask = Task { @MainActor in
+            defer { testing = false }
+            do {
+                if provider == .direct {
+                    let connection = try GeminiDirectConnection(apiKey: apiKey, model: model)
+                    try await connection.testConnection()
+                    try Task.checkCancellation()
+                    try connection.save()
+                    connectionMessage = "Connected and saved. Actual scans can use this iPhone’s Wi-Fi or cellular connection. No Mac needed."
+                } else {
+                    let connection = try VerificationConnection(address: address, token: token)
+                    let result = try await connection.testConnection()
+                    try Task.checkCancellation()
+                    try connection.save()
+                    connectionMessage = result.reviewsRemaining > 0
+                        ? "Connected and saved. Your server has \(result.reviewsRemaining) AI reviews left today."
+                        : "Connected and saved, but the server’s daily review budget is used up. Try later."
+                }
+            } catch is CancellationError { }
+            catch { self.error = error.localizedDescription }
+        }
     }
 }

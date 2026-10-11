@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8919EEB3EFD4D82E82B5D4A9 /* EcoGotchi/Resources/GeminiReview.json in Resources */ = {isa = PBXBuildFile; fileRef = AE44B144C9D3C91C3E41BE57; };
+		560D4DCB053F58EACC88C992 /* EcoGotchi/Models/GeminiDirectConnection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9013671206CB648D8B2B0C2E; };
+		2904958F80DAA07C9407AE99 /* EcoGotchi/Models/GeminiReview.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8701360FE4FDC6514A2897F4; };
 		4C1161432AD6C26B723D84BC /* EcoGotchi/Views/HabitatAtmosphere.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7EFE50DB49D19816E0E36C9; };
 		CF5B88586F7CCFF7C034A68D /* EcoGotchi/Views/RecyclingMapView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D1452968CDF1710881609DF; };
 		833E8E0ADC1DDB6B94D443A3 /* EcoGotchi/Models/RecyclingFinder.swift in Sources */ = {isa = PBXBuildFile; fileRef = B68F29A21030EB7079E69490; };
@@ -35,6 +38,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		AE44B144C9D3C91C3E41BE57 /* EcoGotchi/Resources/GeminiReview.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = EcoGotchi/Resources/GeminiReview.json; sourceTree = SOURCE_ROOT; };
+		9013671206CB648D8B2B0C2E /* EcoGotchi/Models/GeminiDirectConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/GeminiDirectConnection.swift; sourceTree = SOURCE_ROOT; };
+		8701360FE4FDC6514A2897F4 /* EcoGotchi/Models/GeminiReview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/GeminiReview.swift; sourceTree = SOURCE_ROOT; };
 		C7EFE50DB49D19816E0E36C9 /* EcoGotchi/Views/HabitatAtmosphere.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/HabitatAtmosphere.swift; sourceTree = SOURCE_ROOT; };
 		3D1452968CDF1710881609DF /* EcoGotchi/Views/RecyclingMapView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Views/RecyclingMapView.swift; sourceTree = SOURCE_ROOT; };
 		B68F29A21030EB7079E69490 /* EcoGotchi/Models/RecyclingFinder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EcoGotchi/Models/RecyclingFinder.swift; sourceTree = SOURCE_ROOT; };
@@ -78,6 +84,9 @@
 		325F10A6957A34D66CB8C0E4 = {
 			isa = PBXGroup;
 			children = (
+				AE44B144C9D3C91C3E41BE57 /* EcoGotchi/Resources/GeminiReview.json */,
+				9013671206CB648D8B2B0C2E /* EcoGotchi/Models/GeminiDirectConnection.swift */,
+				8701360FE4FDC6514A2897F4 /* EcoGotchi/Models/GeminiReview.swift */,
 				C7EFE50DB49D19816E0E36C9 /* EcoGotchi/Views/HabitatAtmosphere.swift */,
 				3D1452968CDF1710881609DF /* EcoGotchi/Views/RecyclingMapView.swift */,
 				B68F29A21030EB7079E69490 /* EcoGotchi/Models/RecyclingFinder.swift */,
@@ -168,6 +177,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8919EEB3EFD4D82E82B5D4A9 /* EcoGotchi/Resources/GeminiReview.json in Resources */,
 				EE1B7ABAB20473C81AA01D36 /* EcoGotchi/Sounds/scan-disposal.wav in Resources */,
 				B0B583974FF21B7603517094 /* EcoGotchi/Sounds/scan-item.wav in Resources */,
 				5E56B718B1E340D8E8866A12 /* EcoGotchi/Sounds/scan-bin.wav in Resources */,
@@ -182,6 +192,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				560D4DCB053F58EACC88C992 /* EcoGotchi/Models/GeminiDirectConnection.swift in Sources */,
+				2904958F80DAA07C9407AE99 /* EcoGotchi/Models/GeminiReview.swift in Sources */,
 				4C1161432AD6C26B723D84BC /* EcoGotchi/Views/HabitatAtmosphere.swift in Sources */,
 				CF5B88586F7CCFF7C034A68D /* EcoGotchi/Views/RecyclingMapView.swift in Sources */,
 				833E8E0ADC1DDB6B94D443A3 /* EcoGotchi/Models/RecyclingFinder.swift in Sources */,

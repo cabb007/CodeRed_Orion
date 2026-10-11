@@ -5,6 +5,7 @@ struct DeveloperPanel: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showReset = false
     @State private var challengePreview: ChallengePreview?
+    @State private var showScanSettings = false
     @State private var category = DeveloperCategory.habitat
 
     var body: some View {
@@ -24,6 +25,19 @@ struct DeveloperPanel: View {
                     Picker("Controls", selection: $category) {
                         ForEach(DeveloperCategory.allCases) { group in Text(group.rawValue).tag(group) }
                     }.pickerStyle(.segmented)
+                }
+
+                Section("Recycling mode") {
+                    Picker("Recycling mode", selection: $store.recyclingMode) {
+                        ForEach(RecyclingMode.allCases) { Text($0.title).tag($0) }
+                    }.pickerStyle(.segmented)
+                    Text(store.isDemoRecycling
+                         ? "Demo accepts the two photos automatically."
+                         : "Actual sends your two photos for AI review when you tap Send for review. Reviews use your Gemini quota; rewards here only change the preview.")
+                        .font(.caption).foregroundStyle(.secondary)
+                    Button("Set up Actual scans") { store.recyclingMode = .ai; showScanSettings = true }
+                    Text("This mode also applies after you exit preview.")
+                        .font(.caption).foregroundStyle(.secondary)
                 }
 
                 if category == .habitat {
@@ -120,7 +134,7 @@ struct DeveloperPanel: View {
                         Button("Test camera capture") { challengePreview = .camera }
                         Button("Guided capture demo") { challengePreview = .samplePhotos }
                         Button("Preview reward screen") { challengePreview = .reward }
-                        Text("Practice bin → item → disposal with one camera session or sample artwork, including success effects and sounds. Developer scans automatically finish and only change the preview. Exit preview and choose AI review in Scan settings to test Gemini.")
+                        Text("Test camera capture uses the selected Demo or Actual mode. Sample artwork and the reward preview never call AI. All rewards here stay in your temporary habitat.")
                             .font(.caption).foregroundStyle(.secondary)
                     }
 
@@ -168,6 +182,7 @@ struct DeveloperPanel: View {
                               useSamplePhotos: preview == .samplePhotos,
                               showRewardPreview: preview == .reward)
             }
+            .sheet(isPresented: $showScanSettings) { VerificationSettingsView() }
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)
