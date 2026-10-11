@@ -1,4 +1,5 @@
 import React from 'react';
+import { expressionCell } from './animalExpressions';
 import { Image, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 export const colors = { cream: '#f2f0d9', forest: '#244033', sage: '#cfdeaa', gold: '#facb63', paper: '#fffceb', coral: '#e07b57', muted: '#627464' };
@@ -15,7 +16,7 @@ const friends = ['bubbles','shelly','inky','fin','waddles','flurry','pebble','sn
 const decorations = ['bench','lantern','fernPlant','coral','pearl','sandcastle','igloo','snowman','spruce'];
 const names = ['pip', 'fern', 'clover', 'maple', 'flowers', 'mushrooms', 'house', 'leaf', 'bottle', 'can', 'cup', 'paper'];
 
-export function Sprite({ name, size = 48, style }) {
+export function Sprite({ name, size = 48, style, expression }) {
   let atlas = require('../assets/sprites.png');
   let atlasWidth = 1254, atlasHeight = 1254;
   const index = Math.max(0,names.indexOf(name));
@@ -28,6 +29,13 @@ export function Sprite({ name, size = 48, style }) {
     atlasWidth = dimensions?.width || (isFriend ? 1448 : 1254);
     atlasHeight = dimensions?.height || (isFriend ? 1086 : 1254);
     width = atlasWidth / columns; height = atlasHeight / 3; x = i % columns * width; y = Math.floor(i / columns) * height;
+  }
+  const face = expressionCell(name,expression);
+  if (face) {
+    atlas = {grove:require('../assets/grove-expressions.png'),ocean:require('../assets/ocean-expressions.png'),snow:require('../assets/snow-expressions.png')}[face.habitat];
+    const dimensions = Image.resolveAssetSource ? Image.resolveAssetSource(atlas) : null;
+    atlasWidth = dimensions?.width || 1254; atlasHeight = dimensions?.height || 1254;
+    width = face.rect.width; height = face.rect.height; x = face.rect.x; y = face.rect.y;
   }
   const scale = size / Math.max(width,height);
   return <View accessible={false} pointerEvents="none" style={[{width:size,height:size,alignItems:'center',justifyContent:'center'},style]}>

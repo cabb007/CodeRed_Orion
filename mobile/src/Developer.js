@@ -13,11 +13,25 @@ export default function Developer({ onSample, onCamera, onReward }) {
   const store = useGame(), game = store.game, d = store.developer, habitat = habitatID(game);
   const [category,setCategory] = useState('Habitat'), [error,setError] = useState('');
   const run = async work => { setError(''); try { await work(); } catch (e) { setError(e.message); } };
-  const edit = transform => run(() => store.editPreview(transform));
+  const edit = transform => run(() => store.editDeveloper(transform));
   const configure = store.configureDeveloper;
   const timeSkip = hours => edit(g => advance({...g,lastPollution:Date.now() - hours * 3600000},Date.now(),d.interval));
+  const modeControl = <Panel style={[styles.stack,{backgroundColor:colors.gold}]}>
+    <View style={[styles.row,{justifyContent:'space-between'}]}>
+      <Label style={styles.subheading}>Dev Mode {store.isDeveloperMode ? 'on' : 'off'}</Label>
+      <Switch accessibilityLabel="Dev Mode" value={store.isDeveloperMode} disabled={store.modeChanging}
+        onValueChange={enabled => run(() => store.setDeveloperMode(enabled))} />
+    </View>
+    <Label>Test changes in a temporary copy of your habitat. Turning this off discards the changes and restores your real progress and settings.</Label>
+    <Label style={styles.caption}>Real purchases and saved bin changes are unavailable here. Restarting the app returns to real mode.</Label>
+    {store.modeChanging && <Label accessibilityLiveRegion="polite">Switching mode…</Label>}
+  </Panel>;
+  if (!store.isDeveloperMode || store.modeChanging) return <View style={styles.stack}>{modeControl}
+    {!!error && <Label style={styles.error}>{error}</Label>}
+    {!store.modeChanging && <Label>Your real habitat is active. Turn on Dev Mode to access the test controls.</Label>}
+  </View>;
   return <View style={styles.stack}>
-    <Panel style={{backgroundColor:colors.gold}}><Label>Preview changes are temporary. Exit preview to restore your saved habitats.</Label></Panel>
+    {modeControl}
     <View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{['Habitat','Friends','Rewards','Tools'].map(c => <Button key={c} secondary={category !== c} onPress={() => setCategory(c)}>{c}</Button>)}</View>
     {!!error && <Label style={styles.error}>{error}</Label>}
     {category === 'Habitat' && <>
@@ -55,7 +69,7 @@ export default function Developer({ onSample, onCamera, onReward }) {
       <Label style={styles.caption}>Reduce Motion takes priority. Developer scans never call Gemini.</Label>
     </>}
     <Button secondary onPress={() => edit(g => ({...previewActionCount(g,6),litter:0,points:200,foodInventory:Object.fromEntries(FOODS.map(f => [f.id,5]))}))}>Thriving demo · friends + 200 leaves</Button>
-    <Button secondary onPress={() => { configure(developerDefaults()); store.setSelectedFood(null); edit(() => newGame()); }}>Reset this preview</Button>
-    <Button onPress={() => run(store.endPreview)}>Exit preview</Button>
+    <Button secondary onPress={() => { configure(developerDefaults()); store.setSelectedFood(null); edit(() => newGame()); }}>Reset this developer habitat</Button>
+    <Button onPress={() => run(() => store.setDeveloperMode(false))}>Turn off Dev Mode</Button>
   </View>;
 }

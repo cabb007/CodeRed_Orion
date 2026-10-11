@@ -36,13 +36,13 @@ Dependencies and the lockfile pin React Native **0.86.3** for this Expo SDK. Use
 - **Habitat effects:** leaves, fireflies, grass and ripples; ocean bubbles, kelp, rays and sand; snow, wind and ice sparkles. Pollution changes the effects and artwork. Cleanup produces a short sparkle effect.
 - **Find a bin:** request foreground location or submit a city/state or ZIP search; choose 5, 10 or 25 km. Native maps show pins and the list gives materials, access details, source links and directions. No location is requested until Use my location is tapped. OpenStreetMap data is supplemented by city-owned Houston facilities nearby.
 - **Recycling:** capture Your bin → Your item → Disposal, with an optional three-second final shutter timer. A frozen scan overlay, progress, success effects, sound and haptics mark each capture.
-- **Developer preview:** temporary habitats, pollution/timing, unlocks and pet visibility, wallets, custom rewards/cleanup, food stock, decorations, camera/sample/reward screens, animation controls, grid, labels and sprite scale. Exit preview restores saved progress.
+- **Dev Mode:** temporary habitats, pollution/timing, unlocks and pet visibility, wallets, custom rewards/cleanup, food stock, decorations, camera/sample/reward screens, animation controls, grid, labels and sprite scale. Toggle Dev Mode off to restore saved progress and settings.
 
 These features match the existing Swift prototype's scope. Random weather, an account-backed leaderboard, an XP/tier progression system, paid points and donation payments are separate roadmap work.
 
 ## Demo and AI modes
 
-Demo is the default. Three captures automatically earn 20 leaves and clear one piece of litter; demo does not classify photos or require a server. Developer sample captures use artwork and change only the temporary preview.
+Demo is the default. Three captures automatically earn 20 leaves and clear one piece of litter; demo does not classify photos or require a server. Developer sample captures use artwork and change only the temporary developer habitat.
 
 AI review uses the existing Node server and Gemini adapter. From the repository root in a separate terminal:
 
@@ -84,6 +84,41 @@ npm.cmd run export:all
 
 The 44 automated tests cover saved-data compatibility, per-habitat progression, feeding caps and concurrent writes, placements/locks, physics bounds, recycling-location parsing/cache/backoff, one-shot location cancellation, rewards and the existing verification client. Lint, dependency compatibility and web/iOS/Android exports passed for this update, including Hermes bytecode.
 
-Device execution and visual UI behavior have not yet been verified. On both platforms, test foreground location permission denial, map pins/directions, camera/background/retry flows, all captures, feeding, drag/flick, relaunch persistence, developer-preview isolation, sound and Reduce Motion. The browser tool could not reach the validation server in this session. Browser preview supports demo/sample flows and a location list rather than a native map.
+Device execution and visual UI behavior have not yet been verified. On both platforms, test foreground location permission denial, map pins/directions, camera/background/retry flows, all captures, feeding, drag/flick, relaunch persistence, Dev Mode isolation, sound and Reduce Motion. The browser tool could not reach the validation server in this session. Browser preview supports demo/sample flows and a location list rather than a native map.
 
 See [SWIFT_PARITY.md](SWIFT_PARITY.md) for the implementation mapping and remaining platform differences.
+
+## Photo bin landmarks
+
+Open Find a bin → Add a bin landmark. Photograph the bin, use your location or enter coordinates, drag the pin to the bin, and confirm its position and public access. Choose materials from the bin label, add a name and notes, then Save landmark on this phone. Blue pins are personal drafts; they and their photos survive app restarts. Taking a photo does not upload it.
+
+To share, configure Community map connection with your EcoGotchi server's HTTPS origin and ECOGOTCHI_ACCESS_TOKEN. Select the phone draft and tap Share with community. This explicitly publishes the photo, precise bin location, name, materials and notes to other phones using that server. Purple pins are Community · unverified; green pins are existing listings. Photos load when you select a landmark. You can remove your own shared landmark or phone draft. Failed uploads keep the same saved draft for an idempotent retry. Bin sharing works without AI review or a Gemini key and never adds leaves.
+
+The app keeps shared phone copies for offline use, labeled as a phone cache when no current server result replaces them. Browser preview stores local drafts only. A standalone Android build still needs its Google Maps native configuration as described above. This feature currently uses prototype installation ownership rather than user accounts; see server/README.md.
+
+## Animal expressions, collisions and drop reactions
+
+All 12 animals have happy (Thriving), concerned (Littered), sad (Tarnished), and distressed (Polluted) facial sprites, in the habitat and collection cards. Petting, feeding and dropping briefly show a happy reaction before restoring the current habitat face. Existing shelter behavior in polluted habitats still applies. Use Dev Mode to switch litter levels and preview all states.
+
+A shared collision world reserves space around animal sprites, including room for lift/tilt/bobbing. Initial placement, walking, dragging, throws and landings resolve animal-to-animal overlaps. Crowded rows can reposition neighbors; sprite sizes are limited to fit four animals in the viewport. Reduced-motion behavior remains supported. Decorations are not animal collision bodies.
+
+Dropping shows species-inspired onomatopoeia in a speech bubble (Peep!, Ribbit!, Squeak!, Yip!, Blub!, Hiss!, Bloop!, Click-click!, Honk!, Yip-yip!, Arf!, Squeak-squeak!) and announces it to screen readers. These are playful written reactions, not recorded animal audio.
+
+### Four-resident limit and roaming fix
+
+Each active habitat displays at most four eligible animals, including Dev Mode. Visibility, unlock and shelter rules are applied before the cap. The collection still shows all animals. The shared collision world also refuses a fifth resident.
+
+Animal sizes now account for the number of visible residents and leave room for all four to roam. Collision resolution separates animals sideways while preserving their height, so an animal cannot become stuck above its ground level in the falling state. Dropped animals still land and can resume roaming. Normal brief pauses, foreground activity, the roaming toggle and Reduce Motion remain respected.
+
+
+## Dev Mode and Buy Leaves
+
+Open **Dev Mode** from the main screen, then use its on/off switch. Opening the panel alone does not enable it. Turning it on copies your saved gameplay and preferences into memory; developer changes to leaves, food, recycling actions, unlocks, habitat state, decorations, layout and scan sounds stay in that copy. AI review is disabled and server credentials are not exposed in Dev Mode. Saved bin creation, sharing and removal are blocked.
+
+Turning Dev Mode off discards its temporary changes. Turning it on again starts from your real save; relaunching always starts in real mode. Normal elapsed-time pollution still applies to your real habitat when real mode resumes. Switching waits for previously accepted real saves, and callbacks captured in an old mode cannot write into a new mode.
+
+**Shop → Buy Leaves** displays packs of 100, 500 and 1,200 leaves. Tapping Buy displays a coming-soon message within the selected pack. This is a display-only feature: no checkout, external payment link, payment SDK, charge, currency grant or donation transfer is implemented. Prices remain unspecified.
+
+The section states the future plan to direct **80% of each leaf purchase** to organizations supporting preservation, conservation and wildlife reserves. It also clearly states that purchases and donations are coming soon. Organization selection, pricing, payment processing and donation fulfillment remain future work.
+
+Validation for this update: 63 mobile tests cover existing functionality plus isolated developer mutations/preferences, queued real saves, stale callbacks and mode transitions. Lint and iOS/Android/web export checks must pass before applying the update. A physical device should still be used to check the switch, settings restoration and Buy Leaves interactions.

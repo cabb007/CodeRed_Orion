@@ -8,6 +8,7 @@ export function createGameRepository({ read, write, decode, initial, publish }) 
   let tail = Promise.resolve();
   return {
     get: () => current,
+    idle: () => tail,
     update(transform) {
       const operation = tail.then(async () => {
         const next = transform(current);

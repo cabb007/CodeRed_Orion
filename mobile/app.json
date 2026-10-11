@@ -28,7 +28,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Capture three recycling photos. Demo keeps them on your phone; AI mode uploads only when you send for review.",
+          "cameraPermission": "Photograph recycling actions and publicly accessible bin landmarks. Photos are uploaded only when you choose AI review or Share with community.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

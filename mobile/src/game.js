@@ -1,4 +1,5 @@
 import { ANIMALS, DECORATIONS, FOODS, HABITATS } from './catalog.js';
+import { selectHabitatResidents } from './habitatResidents.js';
 export { ANIMALS, DECORATIONS, FOODS, HABITATS } from './catalog.js';
 export const POLLUTION_INTERVAL = 4 * 60 * 60 * 1000;
 export const DEMO_LEAVES = 20;
@@ -11,7 +12,8 @@ export const habitatActions = game => game.actions.filter(a => (a.habitatID || '
 export const condition = litter => litter === 0 ? 'Thriving' : litter <= 2 ? 'Littered' : litter <= 4 ? 'Tarnished' : 'Polluted';
 export const health = game => Math.max(0, 100 - game.litter * 15);
 export const unlockedAnimals = game => ANIMALS.filter(a => a.habitat === habitatID(game) && habitatActions(game).length >= a.required);
-export const residentAnimals = game => unlockedAnimals(game).filter(a => game.litter < 5 || a.required === 0);
+export const residentAnimals = (game,options = {}) => selectHabitatResidents(ANIMALS,{habitat:habitatID(game),actionCount:habitatActions(game).length,
+  litter:game.litter,hiddenAnimals:options.hiddenAnimals,ignoreRetreat:options.ignoreRetreat});
 export const foodCount = (game, id) => game.foodInventory?.[id] || 0;
 export const placement = (game, id) => game.decorationPlacements?.[id] || { locked:false };
 // Original storage key/version remain readable. New fields are additive; old actions belong to the grove.

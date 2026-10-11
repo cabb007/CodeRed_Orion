@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, Switch, TextInput, View } from 'react-native';
 import { useGame } from './GameProvider';
-import { ANIMALS, DECORATIONS, FOODS, HABITATS, foodCount, habitatActions, habitatID, placement } from './game';
+import { ANIMALS, DECORATIONS, FOODS, HABITATS, condition, foodCount, habitatActions, habitatID, placement } from './game';
 import { connection, testConnection } from './verification';
+import LeafShop from './LeafShop';
 import { Button, colors, Label, Panel, Sprite, styles } from './ui';
 export { default as Developer } from './Developer';
 export function Friends() {
@@ -14,7 +15,7 @@ export function Friends() {
     <View style={{flexDirection:'row',flexWrap:'wrap',gap:12}}>{animals.map(animal => {
       const unlocked = count >= animal.required;
       return <Panel key={animal.id} style={{flexGrow:1,flexBasis:'44%',alignItems:'center',gap:8,backgroundColor:unlocked ? colors.sage : colors.paper}}>
-        <Sprite name={animal.id} size={80} style={{opacity:unlocked ? 1 : .3}} />
+        <Sprite name={animal.id} expression={condition(game.litter)} size={80} style={{opacity:unlocked ? 1 : .3}} />
         <Label style={styles.subheading}>{animal.name}</Label><Label style={styles.caption}>{unlocked ? 'Collected' : animal.required + ' actions here'}</Label>
         <Label style={[styles.caption,{textAlign:'center'}]}>{animal.detail}</Label>
         {unlocked && <Label style={styles.caption}>{game.petMeals?.[animal.id] || 0} snacks enjoyed</Label>}
@@ -28,9 +29,10 @@ export function Shop({ initial = 'decorations', onClose }) {
   const [tab,setTab] = useState(initial), [busy,setBusy] = useState(false), [error,setError] = useState('');
   const act = async action => { setBusy(true); setError(''); try { await action(); } catch (e) { setError(e.message || 'Could not save. Please retry.'); } finally { setBusy(false); } };
   return <View style={styles.stack}>
-    <View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{['food','decorations','habitats'].map(t => <Button key={t} secondary={tab !== t} onPress={() => setTab(t)}>{t[0].toUpperCase() + t.slice(1)}</Button>)}</View>
+    <View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{['food','decorations','habitats','leaves'].map(t => <Button key={t} secondary={tab !== t} onPress={() => setTab(t)}>{t === 'leaves' ? 'Buy Leaves' : t[0].toUpperCase() + t.slice(1)}</Button>)}</View>
     <View style={styles.row}><Sprite name="leaf" size={30} /><Label style={styles.subheading}>{game.points} leaves</Label></View>
     {!!error && <Label style={styles.error}>{error}</Label>}
+    {tab === 'leaves' && <LeafShop />}
     {tab === 'food' && <><Label>Buy a snack, choose Use, then tap a pet in your habitat.</Label>
       {FOODS.filter(f => f.habitats.includes(habitat)).map(food => <Panel key={food.id} style={styles.stack}>
         <View style={styles.row}><Sprite name={food.id} size={70} /><View style={{flex:1}}><Label style={styles.subheading}>{food.name}</Label><Label>{food.cost} leaves · {foodCount(game,food.id)} in bag</Label></View></View>
@@ -60,13 +62,13 @@ export function Journal() {
     {[...game.actions].reverse().map(action => <Panel key={action.id} style={{gap:6}}>
       <View style={[styles.row,{justifyContent:'space-between'}]}><Label style={{fontWeight:'700',flex:1}}>{action.item}</Label><Label>+{action.reward}</Label></View>
       <Label style={styles.caption}>{new Date(action.date).toLocaleString()} · {HABITATS.find(h => h.id === (action.habitatID || 'grove'))?.name}</Label>
-      <Label style={styles.caption}>{action.source === 'demo' ? 'Demo · automatically accepted' : action.source === 'preview' ? 'Developer preview' : action.source === 'ai' ? 'AI-reviewed · ' + action.material : 'Earlier self-reported action'}</Label>
+      <Label style={styles.caption}>{action.source === 'demo' ? 'Demo · automatically accepted' : action.source === 'preview' ? 'Dev Mode' : action.source === 'ai' ? 'AI-reviewed · ' + action.material : 'Earlier self-reported action'}</Label>
       {action.tip && <Label style={styles.caption}>{action.tip}</Label>}
     </Panel>)}
   </View>;
 }
 export function Settings({ onDone }) {
-  const { preferences, token, savePreferences, isPreview } = useGame();
+  const { preferences, token, savePreferences, isDeveloperMode } = useGame();
   const [mode, setMode] = useState(preferences.mode);
   const [sound, setSound] = useState(preferences.sound);
   const [address, setAddress] = useState(preferences.url);
@@ -76,7 +78,7 @@ export function Settings({ onDone }) {
   return <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.stack, { paddingBottom: 24 }]}>
     <Label style={styles.heading}>Scan settings</Label>
     <View style={styles.row}><Button secondary={mode !== 'demo'} style={{ flex: 1 }} onPress={() => setMode('demo')}>Demo</Button>
-      <Button secondary={mode !== 'ai'} disabled={isPreview} style={{ flex: 1 }} onPress={() => setMode('ai')}>AI review</Button></View>
+      <Button secondary={mode !== 'ai'} disabled={isDeveloperMode} style={{ flex: 1 }} onPress={() => setMode('ai')}>AI review</Button></View>
     <Label>{mode === 'demo' ? 'Demo accepts three captures automatically and earns 20 leaves. No server is needed.' : 'Send three photos together for Gemini review. Approved actions earn 10–30 leaves; unclear reviews earn zero.'}</Label>
     <View style={[styles.row, { justifyContent: 'space-between' }]}><Label>Scan sounds</Label><Switch accessibilityLabel="Scan sounds" value={sound} onValueChange={setSound} trackColor={{ true: colors.forest }} /></View>
     {mode === 'ai' && <>
@@ -95,7 +97,7 @@ export function Settings({ onDone }) {
         const config = mode === 'ai' ? connection(address, accessToken) : null;
         const status = config ? await testConnection(config) : null;
         await savePreferences({ mode, sound, url: config?.url || preferences.url }, config?.token || token);
-        setMessage(status ? `Connected. ${status.reviewsRemaining} shared reviews remaining. This does not test Gemini’s key or quota.` : 'Demo settings saved.');
+        setMessage(status ? `Connected. ${status.reviewsRemaining} shared reviews remaining. This does not test Gemini’s key or quota.` : isDeveloperMode ? 'Temporary Dev Mode settings saved.' : 'Demo settings saved.');
         if (!status) onDone();
       } catch (error) { setMessage(error.message); }
       finally { setBusy(false); }

@@ -37,7 +37,7 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
   const busyRef = useRef(false);
   const controller = useRef(null);
   const pendingResult = useRef(null);
-  const [mode, setMode] = useState(store.isPreview ? 'demo' : store.preferences.mode);
+  const [mode, setMode] = useState(store.isDeveloperMode ? 'demo' : store.preferences.mode);
   const [cameraKey, setCameraKey] = useState(0);
   const [hasPendingReceipt, setHasPendingReceipt] = useState(false);
   const [frames, setFrames] = useState([]);
@@ -85,14 +85,14 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
     setError('');
     try {
       if (demo) {
-        // Sample artwork can only be used in an isolated developer preview.
-        if (sample && !store.isPreview) throw new Error('Sample captures require developer preview.');
+        // Sample artwork can only be used in an isolated Dev Mode.
+        if (sample && !store.isDeveloperMode) throw new Error('Sample captures require Dev Mode.');
         if (!sample) buildSubmission(id.current, capturedFrames, { demo: true });
         const before = store.game.litter;
         const beforePoints = store.game.points;
         const applied = await store.recordDemo(id.current);
         if (mounted.current) {
-          setResult({ demo: true, preview: store.isPreview, leaves: applied.applied ? applied.game.points - beforePoints : 0,
+          setResult({ demo: true, preview: store.isDeveloperMode, leaves: applied.applied ? applied.game.points - beforePoints : 0,
             cleanup: Math.max(0, before - applied.game.litter), duplicate: !applied.applied });
           releasePhotos(); framesRef.current = []; setFrames([]);
         }
@@ -170,7 +170,7 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
     finally { if (mounted.current) setCountdown(0); setWorking(false); }
   };
 
-  if (showSettings) return <Settings onDone={() => { setMode(store.isPreview ? 'demo' : store.preferences.mode); restart(); setShowSettings(false); }} />;
+  if (showSettings) return <Settings onDone={() => { setMode(store.isDeveloperMode ? 'demo' : store.preferences.mode); restart(); setShowSettings(false); }} />;
   if (inspecting !== null) return <View style={[styles.stack, { flex: 1 }]}>
     <Label style={styles.heading}>{TITLES[inspecting]}</Label><Image source={{ uri: frames[inspecting].uri }} style={{ flex: 1, minHeight: 300 }} resizeMode="contain" />
     <Button secondary onPress={() => setInspecting(null)}>Back to scan</Button>
@@ -178,8 +178,8 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
   if (result) return <ScrollView contentContainerStyle={[styles.stack, { paddingBottom: 24 }]}>
     <Sprite name={result.leaves > 0 ? 'fern' : 'pip'} size={110} style={{ alignSelf: 'center' }} />
     <Label style={styles.heading}>{result.duplicate ? 'Already collected!' : result.demo ? 'Scan complete!' : result.status === 'approved' ? 'AI review passed!' : result.localAcceptance === 'unknown' ? 'Bin rules unclear' : 'This action did not qualify'}</Label>
-    <Panel style={{ backgroundColor: colors.sage }}><Label style={styles.subheading}>{result.duplicate ? 'This action already earned leaves' : `${result.leaves} leaves${result.preview ? ' (preview)' : ' earned'}`}</Label></Panel>
-    {result.demo ? <Label>{result.rewardOnly ? 'Display only. No leaves or progress were changed.' : result.preview ? 'Preview scans change only your temporary progress.' : 'All three captures were accepted in demo mode. Your progress is saved on this phone.'}</Label> : <>
+    <Panel style={{ backgroundColor: colors.sage }}><Label style={styles.subheading}>{result.duplicate ? 'This action already earned leaves' : `${result.leaves} leaves${result.preview ? ' (temporary)' : ' earned'}`}</Label></Panel>
+    {result.demo ? <Label>{result.rewardOnly ? 'Display only. No leaves or progress were changed.' : result.preview ? 'Dev Mode scans change only your temporary progress.' : 'All three captures were accepted in demo mode. Your progress is saved on this phone.'}</Label> : <>
       <Label>{result.itemName} · {result.material}</Label><Label>{result.explanation}</Label>
       <Panel style={{ gap: 8 }}><Label style={styles.subheading}>Sorting tip</Label><Label>{result.tip}</Label><Label style={styles.caption}>Bin evidence: {result.labelEvidence}</Label></Panel>
       <Label style={styles.caption}>{result.limitation}</Label>
@@ -189,7 +189,7 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
 
   return <View style={{ flex: 1 }}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.stack, { paddingBottom: 20 }]}>
-      <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Label style={styles.subheading}>{store.isPreview ? 'Preview scan' : demo ? 'Demo scan · +20 leaves' : 'AI photo review'}</Label>
+      <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Label style={styles.subheading}>{store.isDeveloperMode ? 'Preview scan' : demo ? 'Demo scan · +20 leaves' : 'AI photo review'}</Label>
         <Button secondary disabled={busy || frames.length > 0} onPress={() => setShowSettings(true)}>Settings</Button></View>
       <View style={styles.row}>{TITLES.map((title, i) => <Label key={title} style={[styles.caption, { flex: 1, fontWeight: i === step ? '800' : '400' }]}>{frames.length > i ? '✓' : i + 1} {title}</Label>)}</View>
       {!demo && !store.preferences.url && <Panel style={styles.stack}><Label>Connect your review server before capturing an action.</Label><Button onPress={() => setShowSettings(true)}>Set up AI connection</Button></Panel>}

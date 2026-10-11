@@ -24,7 +24,7 @@ function EcoGotchi() {
       }}>Reset saved habitats</Button></> : <ActivityIndicator color={colors.forest} />}
   </SafeAreaView>;
   const game = store.game, selectedFood = FOODS.find(f => f.id === store.selectedFood);
-  const title = {friends:'Friends',shop:'Shop',habitats:'Habitats',journal:'Journal',developer:'Developer preview',recycling:'Recycle',finder:'Find a bin'}[panel];
+  const title = {friends:'Friends',shop:'Shop',habitats:'Habitats',journal:'Journal',developer:'Dev Mode',recycling:'Recycle',finder:'Find a bin'}[panel];
   const scan = mode => { setSample(mode === 'sample'); setRewardPreview(mode === 'reward'); setPanel('recycling'); };
   return <View style={{flex:1,backgroundColor:colors.cream}}>
     <StatusBar style="dark" /><Habitat game={game} enabled={!panel} />
@@ -32,7 +32,7 @@ function EcoGotchi() {
       <View pointerEvents="box-none" style={[styles.row,{justifyContent:'space-between',flexWrap:'wrap',paddingTop:8,gap:6}]}>
         <Button secondary onPress={() => open('shop')} accessibilityLabel={game.points + ' leaves. Open shop'}>✦ {game.points}</Button>
         <Button secondary onPress={() => open('journal')}>Journal</Button>
-        <Button secondary onPress={() => { store.beginPreview(); open('developer'); }}>{store.isPreview ? 'Dev: on' : 'Dev'}</Button>
+        <Button secondary onPress={() => open('developer')}>{store.isDeveloperMode ? 'Dev Mode: on' : 'Dev Mode'}</Button>
       </View>
       <View style={{alignSelf:'center'}}><Button secondary onPress={() => open('finder')}>Find a bin</Button></View>
       <Pressable accessibilityRole="button" accessibilityLabel="Change habitat" onPress={() => open('habitats')} style={{alignSelf:'center'}}>
@@ -50,10 +50,10 @@ function EcoGotchi() {
         <Sprite name={selectedFood.id} size={32} /><Label style={[styles.caption,{flex:1}]}>Tap a pet to feed {selectedFood.name}. {foodCount(game,selectedFood.id)} left.</Label>
         <Button secondary onPress={() => store.setSelectedFood(null)}>Done</Button>
       </View></Panel>}
-      {store.isPreview && <Button secondary onPress={() => store.endPreview().catch(store.reportError)}>Exit preview · temporary changes</Button>}
+      {store.isDeveloperMode && <Button secondary disabled={store.modeChanging} onPress={() => store.setDeveloperMode(false).catch(store.reportError)}>Dev Mode · Turn off & discard changes</Button>}
       <View style={[styles.row,{alignItems:'flex-end',gap:8}]}>
         <View style={{flex:1}}><Button secondary onPress={() => open('friends')}>Friends</Button></View>
-        <Button style={{minHeight:80}} onPress={() => open('recycling')}>{'RECYCLE\n' + (store.isPreview ? 'Preview' : store.preferences.mode === 'demo' ? '+20 leaves' : 'AI review')}</Button>
+        <Button style={{minHeight:80}} onPress={() => open('recycling')}>{'RECYCLE\n' + (store.isDeveloperMode ? 'Dev Mode' : store.preferences.mode === 'demo' ? '+20 leaves' : 'AI review')}</Button>
         <View style={{flex:1}}><Button secondary onPress={() => open('shop')}>Shop</Button></View>
       </View>
     </SafeAreaView>
@@ -61,7 +61,7 @@ function EcoGotchi() {
       <SafeAreaView style={{flex:1,backgroundColor:colors.cream}}>
         <View style={[styles.row,{padding:20,justifyContent:'space-between'}]}><Label style={[styles.heading,{flex:1}]}>{title}</Label>
           <Button secondary disabled={busy} accessibilityLabel={'Close ' + title} onPress={close}>✕</Button></View>
-        <View style={{flex:1,paddingHorizontal:20}}>
+        <View key={store.sessionId} style={{flex:1,paddingHorizontal:20}}>
           {panel === 'recycling' ? <Recycling sample={sample} rewardPreview={rewardPreview} onClose={close} onBusy={setBusy} /> :
             panel === 'finder' ? <RecyclingFinder /> : <ScrollView contentContainerStyle={{paddingBottom:24}}>
               {panel === 'friends' && <Friends />}{(panel === 'shop' || panel === 'habitats') && <Shop initial={panel === 'habitats' ? 'habitats' : 'decorations'} onClose={close} />}
