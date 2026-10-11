@@ -1,43 +1,50 @@
-import React, { useEffect, useState } from 'react';
-import { AccessibilityInfo, Image, StyleSheet, View, useWindowDimensions } from 'react-native';
-import { ANIMALS, condition, health } from './game';
-import { art, colors, Sprite } from './ui';
-
-export default function Habitat({ game, animate = true }) {
-  const { width, height } = useWindowDimensions();
-  const worldWidth = Math.max(width, height * 9 / 16);
-  const worldHeight = Math.max(height, width * 16 / 9);
-  const [tick, setTick] = useState(0);
-  const [reduceMotion, setReduceMotion] = useState(true);
-  useEffect(() => {
-    let mounted = true;
-    AccessibilityInfo.isReduceMotionEnabled().then(value => { if (mounted) setReduceMotion(value); });
-    const event = AccessibilityInfo.addEventListener('reduceMotionChanged', setReduceMotion);
-    return () => { mounted = false; event.remove(); };
-  }, []);
-  useEffect(() => {
-    if (reduceMotion || !animate) return;
-    const timer = setInterval(() => setTick(t => 1 - t), 700);
-    return () => clearInterval(timer);
-  }, [reduceMotion, animate]);
-  const state = condition(game.litter);
-  const place = (name, x, y, fraction, offset = 0) => <Sprite key={`${name}-${x}`} name={name} size={worldWidth * fraction}
-    style={{ position: 'absolute', left: worldWidth * x - worldWidth * fraction / 2,
-      top: worldHeight * y - worldWidth * fraction / 2 + offset }} />;
-  return <View style={StyleSheet.absoluteFill} pointerEvents="none" accessible accessibilityLabel={`Willow Grove, ${state}. Health ${health(game)} percent. ${game.litter} pieces of litter.`}>
-    <View style={{ width: worldWidth, height: worldHeight, position: 'absolute', left: (width - worldWidth) / 2, top: (height - worldHeight) / 2 }}>
-      <Image source={art[state]} style={{ width: worldWidth, height: worldHeight }} resizeMode="stretch" />
-      {state === 'Littered' && <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.muted, opacity: 0.06 }]} />}
-      {game.ownedDecorations.includes('house') && place('house', 0.21, 0.51, 0.20)}
-      {game.ownedDecorations.includes('flowers') && place('flowers', 0.16, 0.73, 0.14)}
-      {game.ownedDecorations.includes('mushrooms') && place('mushrooms', 0.86, 0.66, 0.13)}
-      {ANIMALS.map((animal, i) => game.actions.length >= animal.required && (state !== 'Polluted' || animal.id === 'pip') &&
-        place(animal.id, [0.34, 0.65, 0.60, 0.27][i], [0.60, 0.57, 0.71, 0.74][i], 0.15, reduceMotion || !animate ? 0 : (tick + i) % 2 * -3))}
-      {Array.from({ length: game.litter }, (_, i) => place(['cup', 'can', 'bottle', 'paper', 'bottle', 'cup'][i],
-        [0.43, 0.73, 0.23, 0.56, 0.79, 0.41][i], [0.72, 0.65, 0.63, 0.61, 0.54, 0.53][i], 0.085))}
-      {state === 'Thriving' && [0.3, 0.75, 0.47, 0.61, 0.23, 0.82].map((x, i) => <View key={i} style={{
-        position: 'absolute', width: 3, height: 3, left: worldWidth * x, top: worldHeight * [0.47, 0.64, 0.72, 0.50, 0.66, 0.44][i],
-        backgroundColor: colors.paper, opacity: reduceMotion ? 0.5 : (tick === i % 2 ? 0.8 : 0.25) }} />)}
-    </View>
+import React, { useState } from 'react';
+import { Image, Pressable, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useGame } from './GameProvider';
+import { ANIMALS, DECORATIONS, HABITATS, condition, habitatActions, habitatID, health, placement } from './game';
+import { habitatArt, colors, Label, Sprite } from './ui';
+import InteractivePet from './InteractivePet';
+import InteractiveDecoration from './InteractiveDecoration';
+import Atmosphere from './Atmosphere';
+import { useReduceMotion, useSceneActive } from './sceneHooks';
+export default function Habitat({ game, enabled = true }) {
+  const store = useGame();
+  const options = store.developer;
+  const {width,height} = useWindowDimensions();
+  const active = useSceneActive(enabled), reduceMotion = useReduceMotion();
+  const [selected,setSelected] = useState(null);
+  const id = habitatID(game), state = condition(game.litter), count = habitatActions(game).length;
+  const worldWidth = Math.max(width,height * 9 / 16), worldHeight = Math.max(height,width * 16 / 9);
+  const offsetX = (worldWidth - width) / 2, offsetY = (worldHeight - height) / 2;
+  const playTop = Math.max(height * .33,Math.min(285,height * .48));
+  const area = {x:10,y:playTop,width:Math.max(1,width - 20),height:Math.max(1,height - Math.min(205,height * .40) - playTop)};
+  const place = (x,y) => ({x:worldWidth * x - offsetX,y:worldHeight * y - offsetY});
+  const selectedID = active ? selected : null;
+  return <View pointerEvents={active ? 'auto' : 'none'} style={StyleSheet.absoluteFill} accessibilityLabel={
+    HABITATS.find(h => h.id === id).name + ', ' + state + '. Health ' + health(game) + ' percent. ' + game.litter + ' pieces of litter.'}>
+    <Pressable accessibilityLabel="Habitat background" accessible={false} onPress={() => setSelected(null)} style={StyleSheet.absoluteFill}>
+      <Image source={habitatArt[id][state]} style={{width:worldWidth,height:worldHeight,left:-offsetX,top:-offsetY}} resizeMode="stretch" />
+    </Pressable>
+    {state === 'Littered' && id === 'grove' && <View pointerEvents="none" style={[StyleSheet.absoluteFill,{backgroundColor:colors.muted,opacity:.06}]} />}
+    {options.showAtmosphere && <Atmosphere key={id} habitat={id} litter={game.litter} width={width} height={height}
+      active={active} animate={options.animateHabitat} reduceMotion={reduceMotion} />}
+    {DECORATIONS.filter(d => d.habitat === id && game.ownedDecorations.includes(d.id)).map(d => <InteractiveDecoration key={id + '-' + d.id + '-' + store.isPreview}
+      item={d} area={area} home={place(d.x,d.y)} size={worldWidth * d.scale * options.spriteScale} placement={placement(game,d.id)}
+      selected={selectedID === d.id} onSelect={() => setSelected(d.id)} active={active} reduceMotion={reduceMotion} labels={options.showLabels} />)}
+    {ANIMALS.filter(a => a.habitat === id).map((animal,i) => count >= animal.required && !options.hiddenAnimals.includes(animal.id) &&
+      (game.litter < 5 || animal.required === 0 || options.ignoreRetreat) && <InteractivePet key={id + '-' + animal.id + '-' + store.isPreview}
+        animal={animal} area={area} home={place([.34,.65,.60,.27][i],(id === 'ocean' ? [.52,.60,.67,.56] : [.68,.65,.73,.70])[i])}
+        size={worldWidth * .15 * options.spriteScale} active={active} reduceMotion={reduceMotion} roam={options.animateAnimals} labels={options.showLabels} />)}
+    {Array.from({length:game.litter},(_,i) => {
+      const p = place([.43,.73,.23,.56,.79,.41][i],[.72,.65,.63,.61,.54,.53][i]), size = worldWidth * .085 * options.spriteScale;
+      return <View pointerEvents="none" key={i} style={{position:'absolute',left:p.x - size / 2,top:p.y - size / 2}}>
+        <Sprite name={['cup','can','bottle','paper','bottle','cup'][i]} size={size} />
+        {options.showLabels && <Label style={{fontSize:8,backgroundColor:colors.paper}}>Litter {i + 1}</Label>}
+      </View>;
+    })}
+    {options.showGrid && <View pointerEvents="none" style={[StyleSheet.absoluteFill,{zIndex:250}]}>{Array.from({length:9},(_,i) => <React.Fragment key={i}>
+      <View style={{position:'absolute',left:width * (i + 1) / 10,top:0,width:1,height,backgroundColor:'#ffffff88'}} />
+      <View style={{position:'absolute',top:height * (i + 1) / 10,left:0,height:1,width,backgroundColor:'#ffffff88'}} />
+    </React.Fragment>)}</View>}
   </View>;
 }

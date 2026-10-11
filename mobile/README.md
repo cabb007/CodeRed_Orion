@@ -1,80 +1,89 @@
-# EcoGotchi for iPhone from Windows
+# EcoGotchi on iOS and Android
 
-JavaScript React Native port of the SwiftUI prototype, built with Expo SDK 57. The Swift app and the existing Node verification server remain in the repository. Original art and scan chimes are reused under the repository license.
+React Native / Expo SDK 57 port of the Swift prototype. The app includes Willow Grove, Coral Cove, Snow Glade, interactive pets, food, movable decorations, habitat effects, recycling capture, and a recycling-location finder. Swift and the Node verification server remain separate.
 
-## Run on your iPhone with Expo Go
+## Run on your phone from Windows
 
-Install Node.js LTS on Windows and **Expo Go** from the iPhone App Store. The current Expo Go release must support SDK 57. Expo Go on physical iPhones requires the PC's Expo CLI and the phone to use the **same Expo account**. This development route does not need a Mac, Xcode, or paid Apple Developer membership.
-
-In PowerShell, from the repository root:
+Install Node.js and a version of **Expo Go** that supports SDK 57 on your iPhone or Android phone. Start inside **mobile**, where package.json lives:
 
 ```powershell
-cd mobile
-npm.cmd ci
-npx.cmd expo login
-npm.cmd start
+cd C:\Users\cjwir\OneDrive\Documents\GitHub\CodeRed_Orion\mobile
+npm.cmd install
+npx.cmd expo start --clear
 ```
 
-Sign into Expo Go with that same account. Connect your PC and phone to the same Wi-Fi, then scan the terminal QR code with the iPhone Camera and choose **Open in Expo Go**. Keep the terminal running. JavaScript edits refresh the app.
+Connect the PC and phone to the same Wi-Fi. On iPhone, scan the terminal QR code with Camera; on Android, scan it with Expo Go. Keep the terminal running.
 
-If LAN access fails (guest Wi-Fi, Windows firewall, or different networks), stop the server with Ctrl+C and use:
+If Expo asks you to sign in, use `npx.cmd expo login` and sign into Expo Go with the same account. This command uses the terminal login flow. If your Windows browser launcher fails with `--browser`, use the terminal flow instead.
+
+For networks where LAN discovery fails, stop Expo with Ctrl+C and run:
 
 ```powershell
-npm.cmd run iphone
+npx.cmd expo start --tunnel --clear
 ```
 
-This starts an Expo tunnel. It shares the development app; it does **not** tunnel the Gemini verification server. Tunnel reloads can be slower. If Expo Go reports an account mismatch, run `npx.cmd expo login` again and check the account on the phone. If it reports an unsupported SDK, update Expo Go and check its supported SDK before changing dependency versions.
+The tunnel shares the development app. Your optional verification server needs its own reachable HTTPS address. See [Expo's device setup](https://docs.expo.dev/get-started/start-developing/).
 
-Official instructions: [Windows setup](https://docs.expo.dev/get-started/create-a-project/) and [device login, QR codes and tunnels](https://docs.expo.dev/get-started/start-developing/).
+Dependencies and the lockfile pin React Native **0.86.3** for this Expo SDK. Use the committed lockfile on a clean checkout with `npm.cmd ci`; do not replace the React Native version independently.
 
-## Play the demo
+## Features
 
-Demo mode is the default. Open **Recycle**, grant camera permission, and capture **Your bin → Your item → Disposal**. The last step has an optional three-second timer. Completing all three captures automatically earns 20 leaves and clears one piece of virtual litter. No API key or review server is needed; photos are not classified in demo mode.
+- **Three habitats:** use the habitat title or Shop → Habitats to switch. Pollution, pet unlocks, decorations, and positions are tracked for each habitat. Leaves and the journal are shared.
+- **Twelve pets:** each habitat has four friends unlocked at 0, 1, 3, and 6 recycling actions in that habitat. Pets shelter at high pollution, apart from the starter.
+- **Pet interaction:** tap for affection; drag and release to drop or flick. Pets roam and stay within the play area. Ocean motion uses reduced gravity. Motion pauses behind panels and in the background, and respects Reduce Motion.
+- **Food:** buy one of four snacks with earned leaves, tap Use, then tap an available pet. Snacks and meal counts persist. Feeding does not award leaves or recycling progress.
+- **Twelve decorations:** buy habitat-specific decorations, drag them into position, tap to lock/unlock, or reset the current layout in Shop. Normalized coordinates survive viewport changes and relaunches.
+- **Habitat effects:** leaves, fireflies, grass and ripples; ocean bubbles, kelp, rays and sand; snow, wind and ice sparkles. Pollution changes the effects and artwork. Cleanup produces a short sparkle effect.
+- **Find a bin:** request foreground location or submit a city/state or ZIP search; choose 5, 10 or 25 km. Native maps show pins and the list gives materials, access details, source links and directions. No location is requested until Use my location is tapped. OpenStreetMap data is supplemented by city-owned Houston facilities nearby.
+- **Recycling:** capture Your bin → Your item → Disposal, with an optional three-second final shutter timer. A frozen scan overlay, progress, success effects, sound and haptics mark each capture.
+- **Developer preview:** temporary habitats, pollution/timing, unlocks and pet visibility, wallets, custom rewards/cleanup, food stock, decorations, camera/sample/reward screens, animation controls, grid, labels and sprite scale. Exit preview restores saved progress.
 
-- Pollution accumulates every four hours, including time away, up to six pieces.
-- Pip starts unlocked. Fern, Clover, and Maple unlock at 1, 3, and 6 actions. Other animals shelter when the grove is polluted.
-- Friends, Decorate, and Journal match the Swift prototype's collection, purchases, and action history.
-- Progress uses local AsyncStorage. Writes are serialized; rewards appear after the save succeeds. Duplicate submission and receipt IDs cannot award twice. A last-known-good backup can recover a damaged save. Unrecoverable saves are kept until the user explicitly resets them.
-- Dev uses an isolated temporary copy. Try the **Guided capture demo** with sample art, change litter, unlock friends, and try purchases. **Exit preview** restores the saved grove. Developer actions never call Gemini.
-- Sounds respect iPhone Silent Mode. Habitat motion respects Reduce Motion; controls expose accessibility labels.
+These features match the existing Swift prototype's scope. Random weather, an account-backed leaderboard, an XP/tier progression system, paid points and donation payments are separate roadmap work.
 
-The browser preview (`npm.cmd run web`) supports the habitat, collection, shop, journal, and developer sample scan. AI review is disabled in the browser. Use the iPhone to test real camera, haptics, and sound behavior.
+## Demo and AI modes
 
-## Optional AI review from Windows
+Demo is the default. Three captures automatically earn 20 leaves and clear one piece of litter; demo does not classify photos or require a server. Developer sample captures use artwork and change only the temporary preview.
 
-Use the existing server; its reward policy and Gemini adapter are unchanged. From another PowerShell terminal:
+AI review uses the existing Node server and Gemini adapter. From the repository root in a separate terminal:
 
 ```powershell
 cd server
 Copy-Item .env.example .env
-# Edit .env privately: GEMINI_API_KEY and a separate ECOGOTCHI_ACCESS_TOKEN.
+# Edit privately: GEMINI_API_KEY and a separate ECOGOTCHI_ACCESS_TOKEN.
 npm.cmd start
 ```
 
-Expose that server at an **HTTPS** address using your hosting or HTTPS tunnel provider. Keep its authentication enabled. This port deliberately requires HTTPS because Expo Go's native transport settings cannot be customized by `app.json`.
+Expose the server at an HTTPS address with authentication enabled. In Recycle → Settings select AI review, enter that HTTPS base address and the access token, and Save & test connection. The Gemini key stays on the server. The phone token uses SecureStore. Browser AI review is disabled.
 
-In **Recycle → Settings**, select **AI review**, enter the HTTPS base address (no path) and `ECOGOTCHI_ACCESS_TOKEN`, then **Save & test connection**. The separate access token is stored in SecureStore on the phone. Never enter the Gemini API key in the app. Testing checks server identity, authentication, and the shared review budget without spending a Gemini attempt. It does not validate Google's key or quota.
+Capture the same bin/item/disposal sequence within ten minutes, inspect the photos, and Send for review. Approved reviews earn material-based leaves. Network retries reuse the submission; a received receipt can retry a failed local save while that screen stays open. Closing the screen discards its pending scan. See [server/README.md](../server/README.md) for verification limits.
 
-Capture all three photos within ten minutes. Inspect them, then **Send for review**. Only approved reviews earn material-based leaves. Rejections and unclear reviews earn zero. All Gemini limits, exact-reuse checks, and prototype limitations remain those in [server/README.md](../server/README.md).
+## Native configuration
 
-Network retries reuse the same submission ID and photos while the scan screen stays open. A received receipt survives a local-save failure in memory, allowing a save retry without another Gemini request. Closing the screen or terminating the app discards the pending scan; account-based receipt recovery remains outside this port.
+Expo Go supplies the native map modules and hosting configuration. iOS uses Apple Maps. Standalone Android builds need a Maps SDK for Android key, configured through `GOOGLE_MAPS_ANDROID_API_KEY` in the build environment; `app.config.js` passes it to the react-native-maps plugin. Configure the key's Android package/signing restrictions for your build. See [Expo map configuration](https://docs.expo.dev/versions/latest/sdk/map-view/).
 
-## Photos and saves
+Camera permissions, foreground location, SecureStore and audio plugins are configured. Background location and microphone recording are disabled. Expo Go is a development host; installing a standalone app requires a development/distribution build and platform signing. Building iOS locally requires macOS/Xcode; EAS cloud builds are another route.
 
-Expo Camera and ImageManipulator create temporary **app-cache files**. This port deletes originals after resizing and attempts to delete scan files when a scan finishes, restarts, or closes. An app crash can leave temporary cache files until the OS clears them. Images are not added to the photo library. Demo and preview never upload photos. AI uploads only the three prepared JPEGs on explicit submission, never the live camera preview.
+## Saves and location data
 
-React Native uses its own versioned local save; it does not import Swift UserDefaults or Keychain saves. Expo Go is a development host, not a standalone distributed EcoGotchi application. A separate App Store/TestFlight app can later be built with EAS and requires the appropriate Apple signing/distribution membership.
+Existing React Native version-one saves keep their leaves, grove actions and decorations. New fields default safely. Mutations and backups are serialized; UI progress publishes after the write succeeds. Receipt/submission deduplication covers all habitats. A backup can recover a damaged save. React Native does not import Swift UserDefaults or Keychain saves.
+
+Device coordinates are rounded to three decimals before a recycling search. OpenStreetMap Overpass receives those search coordinates and radius; its Nominatim service receives submitted place text. Houston's public city dataset is fetched without device coordinates. Fresh results are cached in memory for 15 minutes; labeled stale results may be shown for up to one day after an outage. Requests are cancelled when the finder closes, and public-service backoff is honored. Listings are not guarantees of acceptance; unknown access/materials remain labeled unknown.
+
+City search is submitted explicitly, with no autocomplete. The public geocoder is rate limited and attributed. A larger deployment should use its own geocoding service; endpoints can be supplied to `createLocationService`. See the [Nominatim usage policy](https://operations.osmfoundation.org/policies/nominatim/).
+
+Camera photos use temporary app-cache files, are resized, and are removed when scans finish/restart/close. A crash may leave files until the OS clears the cache. Demo/preview do not upload photos. AI uploads only the three prepared JPEGs after explicit submission.
 
 ## Validation
 
 ```powershell
 npm.cmd test
 npm.cmd run lint
-npm.cmd run export:ios
+npm.cmd run check:dependencies
+npm.cmd run export:all
 ```
 
-The JavaScript tests cover pollution, unlocks, purchases, save validation/backup recovery, serialized writes and failed-save retry, idempotent rewards, capture order/age, HTTPS settings, authenticated connection checks, and receipt validation. Existing server tests still run with `npm.cmd test` in `server`.
+The 44 automated tests cover saved-data compatibility, per-habitat progression, feeding caps and concurrent writes, placements/locks, physics bounds, recycling-location parsing/cache/backoff, one-shot location cancellation, rewards and the existing verification client. Lint, dependency compatibility and web/iOS/Android exports passed for this update, including Hermes bytecode.
 
-The iOS export verifies bundling, not installation or native device execution. Validate camera permission denial, backgrounding between captures, all three captures, shutter timer, Silent Mode, Reduce Motion, network retry, and rewards after relaunch on a physical iPhone. Real Gemini accuracy still requires a configured server and representative photographs.
+Device execution and visual UI behavior have not yet been verified. On both platforms, test foreground location permission denial, map pins/directions, camera/background/retry flows, all captures, feeding, drag/flick, relaunch persistence, developer-preview isolation, sound and Reduce Motion. The browser tool could not reach the validation server in this session. Browser preview supports demo/sample flows and a location list rather than a native map.
 
-`npm audit` currently reports upstream advisories in Expo/Metro, node-forge, uuid and the tunnel helper. Nonbreaking `npm audit fix` did not resolve all of them; its proposed force fix downgrades Expo incompatibly. Keep the development server on a trusted network and recheck upstream fixes before public production use.
+See [SWIFT_PARITY.md](SWIFT_PARITY.md) for the implementation mapping and remaining platform differences.

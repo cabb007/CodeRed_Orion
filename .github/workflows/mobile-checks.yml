@@ -20,7 +20,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run lint
-      - run: npm run export:ios
+      - run: npm run export:all
         env:
           EXPO_NO_TELEMETRY: '1'
       - run: npm test

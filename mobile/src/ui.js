@@ -6,21 +6,37 @@ export const art = {
   Thriving: require('../assets/grove-thriving.png'), Littered: require('../assets/grove-thriving.png'),
   Tarnished: require('../assets/grove-tarnished.png'), Polluted: require('../assets/grove-polluted.png'),
 };
+export const habitatArt = {
+  grove: art,
+  ocean: { Thriving: require('../assets/ocean-thriving.png'), Littered: require('../assets/ocean-littered.png'), Tarnished: require('../assets/ocean-tarnished.png'), Polluted: require('../assets/ocean-polluted.png') },
+  snow: { Thriving: require('../assets/snow-thriving.png'), Littered: require('../assets/snow-littered.png'), Tarnished: require('../assets/snow-tarnished.png'), Polluted: require('../assets/snow-polluted.png') },
+};
+const friends = ['bubbles','shelly','inky','fin','waddles','flurry','pebble','snowdrop','berries','kelp','crunch','apple'];
+const decorations = ['bench','lantern','fernPlant','coral','pearl','sandcastle','igloo','snowman','spruce'];
 const names = ['pip', 'fern', 'clover', 'maple', 'flowers', 'mushrooms', 'house', 'leaf', 'bottle', 'can', 'cup', 'paper'];
 
 export function Sprite({ name, size = 48, style }) {
-  const index = Math.max(0, names.indexOf(name));
-  const column = index % 4; const row = Math.floor(index / 4);
-  const x = [40, 345, 638, 925][column]; const y = [165, 520, 873][row];
-  const width = [272, 287, 289, 310][column]; const height = [333, 293, 273][row];
-  const scale = size / Math.max(width, height);
-  return <View accessible={false} style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
-    <View style={{ width: width * scale, height: height * scale, overflow: 'hidden' }}>
-      <Image source={require('../assets/sprites.png')} resizeMode="stretch" style={{ position: 'absolute', width: 1254 * scale,
-        height: 1254 * scale, left: -x * scale, top: -y * scale }} />
+  let atlas = require('../assets/sprites.png');
+  let atlasWidth = 1254, atlasHeight = 1254;
+  const index = Math.max(0,names.indexOf(name));
+  let x = [40,345,638,925][index % 4], y = [165,520,873][Math.floor(index / 4)];
+  let width = [272,287,289,310][index % 4], height = [333,293,273][Math.floor(index / 4)];
+  if (friends.includes(name) || decorations.includes(name)) {
+    const isFriend = friends.includes(name), i = (isFriend ? friends : decorations).indexOf(name), columns = isFriend ? 4 : 3;
+    atlas = isFriend ? require('../assets/friends-food.png') : require('../assets/habitat-decor.png');
+    const dimensions = Image.resolveAssetSource ? Image.resolveAssetSource(atlas) : null;
+    atlasWidth = dimensions?.width || (isFriend ? 1448 : 1254);
+    atlasHeight = dimensions?.height || (isFriend ? 1086 : 1254);
+    width = atlasWidth / columns; height = atlasHeight / 3; x = i % columns * width; y = Math.floor(i / columns) * height;
+  }
+  const scale = size / Math.max(width,height);
+  return <View accessible={false} pointerEvents="none" style={[{width:size,height:size,alignItems:'center',justifyContent:'center'},style]}>
+    <View style={{width:width * scale,height:height * scale,overflow:'hidden'}}>
+      <Image source={atlas} resizeMode="stretch" style={{position:'absolute',width:atlasWidth * scale,height:atlasHeight * scale,left:-x * scale,top:-y * scale}} />
     </View>
   </View>;
 }
+
 export function Label({ children, style, ...props }) {
   return <Text {...props} style={[styles.text, style]}>{children}</Text>;
 }

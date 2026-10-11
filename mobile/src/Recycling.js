@@ -11,6 +11,9 @@ import { assess, buildSubmission, connection, STEPS } from './verification';
 import { Settings } from './Panels';
 import { art, Button, colors, Label, Panel, Sprite, styles } from './ui';
 
+import ScanOverlay from './ScanOverlay';
+import { useReduceMotion } from './sceneHooks';
+
 const TITLES = ['Your bin', 'Your item', 'Disposal'];
 const INSTRUCTIONS = [
   'Show the bin and its opening. Include any sorting icons, labels, or nearby signs.',
@@ -20,8 +23,10 @@ const INSTRUCTIONS = [
 const deleteFile = uri => { if (Platform.OS !== 'web' && uri?.startsWith('file:')) { try { new File(uri).delete(); } catch {} } };
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-export default function Recycling({ sample = false, onClose, onBusy }) {
+export default function Recycling({ sample = false, rewardPreview = false, onClose, onBusy }) {
   const store = useGame();
+  const reduceMotion = useReduceMotion();
+  const [scanFrame, setScanFrame] = useState(null);
   const [permission, requestPermission] = useCameraPermissions();
   const camera = useRef(null);
   const framesRef = useRef([]);
@@ -42,7 +47,7 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
   const [useTimer, setUseTimer] = useState(false);
   const [error, setError] = useState('');
   const [scanned, setScanned] = useState('');
-  const [result, setResult] = useState(null);
+  const [result, setResult] = useState(rewardPreview ? { demo: true, preview: true, rewardOnly: true, leaves: 0, cleanup: 0 } : null);
   const [showSettings, setShowSettings] = useState(false);
   const [inspecting, setInspecting] = useState(null);
   const [active, setActive] = useState(AppState.currentState === 'active');
@@ -55,7 +60,7 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
   const setWorking = value => { busyRef.current = value; if (mounted.current) setBusy(value); onBusy(value); };
   const releasePhotos = () => { files.current.forEach(deleteFile); files.current.clear(); };
   const restart = () => {
-    generation.current++; releasePhotos(); framesRef.current = []; id.current = uuid(); pendingResult.current = null;
+    generation.current++; setScanFrame(null); releasePhotos(); framesRef.current = []; id.current = uuid(); pendingResult.current = null;
     setCameraKey(key => key + 1); setHasPendingReceipt(false);
     setFrames([]); setResult(null); setError(''); setScanned(''); setReady(false); setCountdown(0);
   };
@@ -69,7 +74,7 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
       setActive(state === 'active');
       if (state !== 'active' && framesRef.current.length < 3) {
         generation.current++; framesRef.current = []; releasePhotos(); setFrames([]); setReady(false); setCountdown(0); setScanned('');
-        setError('The camera session ended. Start with your bin again.');
+        setScanFrame(null); setError('The camera session ended. Start with your bin again.');
       }
     });
     return () => subscription.remove();
@@ -84,9 +89,10 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
         if (sample && !store.isPreview) throw new Error('Sample captures require developer preview.');
         if (!sample) buildSubmission(id.current, capturedFrames, { demo: true });
         const before = store.game.litter;
+        const beforePoints = store.game.points;
         const applied = await store.recordDemo(id.current);
         if (mounted.current) {
-          setResult({ demo: true, preview: store.isPreview, leaves: applied.applied ? 20 : 0,
+          setResult({ demo: true, preview: store.isPreview, leaves: applied.applied ? applied.game.points - beforePoints : 0,
             cleanup: Math.max(0, before - applied.game.litter), duplicate: !applied.applied });
           releasePhotos(); framesRef.current = []; setFrames([]);
         }
@@ -144,8 +150,11 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
       }
       if (!mounted.current || epoch !== generation.current) { deleteFile(photo.uri); return; }
       if (!demo && framesRef.current.some(f => f.data === photo.data)) throw new Error('Take a different photo for this step.');
+      setScanFrame(photo.uri);
+      await pause(650);
+      if (!mounted.current || epoch !== generation.current) return;
       const next = [...framesRef.current, { ...photo, role: STEPS[index], capturedAt }];
-      framesRef.current = next; setFrames(next);
+      framesRef.current = next;
       const message = `Successfully scanned ${STEPS[index]}`;
       setScanned(message); AccessibilityInfo.announceForAccessibility(message);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -157,7 +166,7 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
       if (!mounted.current || epoch !== generation.current) return;
       setScanned('');
       if (next.length === 3 && demo) await complete(next);
-    } catch (failure) { if (mounted.current) setError(failure.message || 'Capture failed. Try again.'); }
+    } catch (failure) { if (mounted.current) { setScanFrame(null); setError(failure.message || 'Capture failed. Try again.'); } }
     finally { if (mounted.current) setCountdown(0); setWorking(false); }
   };
 
@@ -170,12 +179,12 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
     <Sprite name={result.leaves > 0 ? 'fern' : 'pip'} size={110} style={{ alignSelf: 'center' }} />
     <Label style={styles.heading}>{result.duplicate ? 'Already collected!' : result.demo ? 'Scan complete!' : result.status === 'approved' ? 'AI review passed!' : result.localAcceptance === 'unknown' ? 'Bin rules unclear' : 'This action did not qualify'}</Label>
     <Panel style={{ backgroundColor: colors.sage }}><Label style={styles.subheading}>{result.duplicate ? 'This action already earned leaves' : `${result.leaves} leaves${result.preview ? ' (preview)' : ' earned'}`}</Label></Panel>
-    {result.demo ? <Label>{result.preview ? 'Sample scans change only your temporary preview.' : 'All three captures were accepted in demo mode. Your progress is saved on this phone.'}</Label> : <>
+    {result.demo ? <Label>{result.rewardOnly ? 'Display only. No leaves or progress were changed.' : result.preview ? 'Preview scans change only your temporary progress.' : 'All three captures were accepted in demo mode. Your progress is saved on this phone.'}</Label> : <>
       <Label>{result.itemName} · {result.material}</Label><Label>{result.explanation}</Label>
       <Panel style={{ gap: 8 }}><Label style={styles.subheading}>Sorting tip</Label><Label>{result.tip}</Label><Label style={styles.caption}>Bin evidence: {result.labelEvidence}</Label></Panel>
       <Label style={styles.caption}>{result.limitation}</Label>
     </>}
-    <Button onPress={onClose}>Back to my habitat</Button><Button secondary onPress={restart}>Start a new scan</Button>
+    <Button onPress={onClose}>Back to my habitat</Button>{!rewardPreview && <Button secondary onPress={restart}>Start a new scan</Button>}
   </ScrollView>;
 
   return <View style={{ flex: 1 }}>
@@ -195,6 +204,7 @@ export default function Recycling({ sample = false, onClose, onBusy }) {
                 <Label style={{ color: colors.paper, textAlign: 'center' }}>{active ? 'Camera permission is needed to capture your recycling action.' : 'Return to the app to start the camera.'}</Label>
                 {active && <Button secondary onPress={() => permission?.canAskAgain === false ? Linking.openSettings() : requestPermission()}>{permission?.canAskAgain === false ? 'Open phone settings' : 'Allow camera'}</Button>}
               </View>}
+          {!!scanFrame && <ScanOverlay uri={scanFrame} demo={demo} success={scanned} reduceMotion={reduceMotion} />}
           {!!countdown && <Label style={{ position: 'absolute', alignSelf: 'center', top: 110, color: '#ffffff', fontSize: 60, lineHeight: 80, fontWeight: '800' }}>{countdown}</Label>}
           {!!scanned && <Panel style={{ position: 'absolute', bottom: 16, left: 12, right: 12, backgroundColor: colors.gold }}><Label style={{ textAlign: 'center', fontWeight: '700' }}>{scanned}</Label></Panel>}
         </View>

@@ -10,11 +10,14 @@
     "web": "expo start --web",
     "test": "node --test tests/*.test.mjs",
     "export:ios": "expo export --platform ios",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "export:android": "expo export --platform android",
+    "check:dependencies": "expo install --check",
+    "export:all": "expo export --platform all"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "2.2.0",
-    "expo": "^57.0.27",
+    "expo": "~57.0.27",
     "expo-asset": "~57.0.19",
     "expo-audio": "~57.0.5",
     "expo-camera": "~57.0.6",
@@ -28,7 +31,9 @@
     "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "expo-location": "~57.0.20",
+    "react-native-maps": "1.27.2"
   },
   "devDependencies": {
     "@expo/ngrok": "^4.1.3",

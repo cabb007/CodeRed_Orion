@@ -22,7 +22,11 @@ export function createGameRepository({ read, write, decode, initial, publish }) 
       tail = operation.catch(() => {});
       return operation;
     },
-    async backup() { await write(BACKUP_KEY, JSON.stringify(current)); },
+    backup() {
+      const operation = tail.then(() => write(BACKUP_KEY, JSON.stringify(current)));
+      tail = operation.catch(() => {});
+      return operation;
+    },
   };
 }
 
