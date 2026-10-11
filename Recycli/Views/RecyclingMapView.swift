@@ -3,6 +3,7 @@ import MapKit
 
 struct RecyclingMapView: View {
     @ObservedObject var finder: RecyclingFinder
+    @StateObject private var bins = CommunityBinStore()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.openURL) private var openURL
     @State private var searchText = ""
@@ -55,6 +56,7 @@ struct RecyclingMapView: View {
                                     .font(.subheadline).multilineTextAlignment(.center)
                             }.frame(maxWidth: .infinity).padding(.vertical, 22)
                         }
+                        CommunityLandmarksView(bins:bins,area:finder.area)
                         attribution
                     }.padding(.horizontal, 20).padding(.bottom, 24)
                 }.scrollDismissesKeyboard(.interactively)
@@ -110,6 +112,15 @@ struct RecyclingMapView: View {
                 Annotation("Search area", coordinate: coordinate(area.center)) {
                     Image(systemName: "scope").font(.title2).foregroundStyle(.blue)
                         .padding(5).background(.white, in: Circle()).accessibilityLabel("Center of searched area")
+                }
+                ForEach(bins.saved.filter { entry in
+                    (entry.shared == nil || entry.server != VerificationConnection.savedURL) &&
+                        area.center.distance(to:entry.draft.coordinate) <= Double(area.radius)
+                }) { entry in
+                    Marker(entry.draft.name,coordinate:coordinate(entry.draft.coordinate)).tint(.blue)
+                }
+                ForEach(bins.nearby(area,origin:VerificationConnection.savedURL)) { bin in
+                    Marker(bin.name,coordinate:coordinate(bin.coordinate)).tint(.purple)
                 }
                 ForEach(finder.locations) { location in
                     Marker(location.name, systemImage: "arrow.3.trianglepath", coordinate: coordinate(location.coordinate))
@@ -229,12 +240,7 @@ struct RecyclingMapView: View {
     }
 
     private func directions(to location: RecyclingLocation) {
-        let item: MKMapItem
-        if #available(iOS 26, *) {
-            item = MKMapItem(location: CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude), address: nil)
-        } else {
-            item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate(location.coordinate)))
-        }
+        let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate(location.coordinate)))
         item.name = location.name
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
     }

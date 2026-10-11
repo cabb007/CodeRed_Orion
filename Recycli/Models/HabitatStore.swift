@@ -13,12 +13,19 @@ final class HabitatStore: ObservableObject {
     private var reviewAttemptID = UUID()
     private var previewID: UUID?
     @Published var recyclingMode: RecyclingMode {
-        didSet { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") }
+        didSet { if !isDeveloperMode { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") } }
     }
+    @Published var scanSounds = true {
+        didSet { if !isDeveloperMode { defaults.set(scanSounds, forKey: "ecogotchi.scanSounds") } }
+    }
+    @Published private(set) var modeSessionID = UUID()
+    private var savedPreferences: (RecyclingMode, Bool)?
+    func isCurrentSession(_ id: UUID) -> Bool { id == modeSessionID }
     private let key = "ecogotchi.habitat.v1"
     private let defaults: UserDefaults
 
     var state: HabitatState { session.state }
+    var savedLeafTotal: Int { session.persistedState.points }
     var isDeveloperMode: Bool { session.isDeveloperMode }
     var isDemoRecycling: Bool { recyclingMode == .demo }
     var selectedFood: PetFood? {
@@ -30,6 +37,7 @@ final class HabitatStore: ObservableObject {
         recyclingMode = defaults.string(forKey: "ecogotchi.recyclingMode").flatMap(RecyclingMode.init(rawValue:)) ?? .demo
         let saved = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(HabitatState.self, from: $0) }
         session = HabitatSession(state: saved ?? HabitatState())
+        scanSounds = defaults.object(forKey: "ecogotchi.scanSounds") as? Bool ?? true
         refresh()
     }
 
@@ -41,8 +49,8 @@ final class HabitatStore: ObservableObject {
         save()
     }
 
-    func record(item: String) {
-        guard isDeveloperMode else { return }
+    func record(item: String, sessionID: UUID? = nil) {
+        guard isDeveloperMode, sessionID == nil || sessionID == modeSessionID else { return }
         session.state.recordAction(item: "[Preview] \(item)",
                                    reward: developer.actionReward,
                                    cleanup: developer.cleanupPerAction)
@@ -50,8 +58,8 @@ final class HabitatStore: ObservableObject {
     }
 
     @discardableResult
-    func recordDemoAction(_ submission: RecyclingSubmission) -> Bool {
-        guard !isDeveloperMode, isDemoRecycling,
+    func recordDemoAction(_ submission: RecyclingSubmission, sessionID: UUID? = nil) -> Bool {
+        guard sessionID == nil || sessionID == modeSessionID, !isDeveloperMode, isDemoRecycling,
               submission.photos.map(\.role) == ["bin", "item"],
               submission.photos.allSatisfy({ $0.source == "camera" && !$0.data.isEmpty }),
               !state.actions.contains(where: { $0.submissionID == submission.submissionId }) else { return false }
@@ -64,14 +72,14 @@ final class HabitatStore: ObservableObject {
     }
 
     @discardableResult
-    func recordReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
-        guard !isDeveloperMode else { return false }
+    func recordReviewedAction(_ assessment: RecyclingAssessment, sessionID: UUID? = nil) -> Bool {
+        guard sessionID == nil || sessionID == modeSessionID, !isDeveloperMode else { return false }
         return applyReviewedAction(assessment)
     }
 
     @discardableResult
-    func recordPreviewReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
-        guard isDeveloperMode, recyclingMode == .ai else { return false }
+    func recordPreviewReviewedAction(_ assessment: RecyclingAssessment, sessionID: UUID? = nil) -> Bool {
+        guard sessionID == nil || sessionID == modeSessionID, isDeveloperMode, recyclingMode == .ai else { return false }
         return applyReviewedAction(assessment)
     }
 
@@ -249,6 +257,8 @@ final class HabitatStore: ObservableObject {
     func beginDeveloperMode() {
         guard !isDeveloperMode else { return }
         refresh()
+        savedPreferences = (recyclingMode, scanSounds)
+        modeSessionID = UUID()
         session.beginPreview()
         previewID = UUID()
         session.state.lastPollution = Date()
@@ -257,9 +267,16 @@ final class HabitatStore: ObservableObject {
     }
 
     func endDeveloperMode() {
+        guard isDeveloperMode else { return }
+        modeSessionID = UUID()
         if scanReview?.previewID != nil { clearScanReview() }
         previewID = nil
         session.endPreview()
+        if let savedPreferences {
+            recyclingMode = savedPreferences.0
+            scanSounds = savedPreferences.1
+        }
+        savedPreferences = nil
         developer = DeveloperOptions()
         selectedFoodID = nil
         refresh()
@@ -320,6 +337,7 @@ final class HabitatStore: ObservableObject {
 
     func resetPreview() {
         guard isDeveloperMode else { return }
+        modeSessionID = UUID()
         if scanReview?.previewID != nil { clearScanReview() }
         previewID = UUID()
         session.state = HabitatState()

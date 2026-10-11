@@ -218,11 +218,13 @@ struct HabitatStoreChecks {
         let reopened = HabitatStore(defaults: defaults)
         precondition(reopened.state.points == original.points && reopened.state.actions.count == original.actions.count,
                      "Actual preview rewards never overwrite the real save")
-        precondition(reopened.recyclingMode == .ai, "The chosen scan mode survives relaunch")
+        precondition(reopened.recyclingMode == .demo, "Preview scan preferences never overwrite the saved mode")
         store.endDeveloperMode()
-        precondition(store.recyclingMode == .ai && store.state.points == original.points)
+        precondition(store.recyclingMode == .demo && store.state.points == original.points)
+        store.recyclingMode = .ai
+        precondition(HabitatStore(defaults: defaults).recyclingMode == .ai, "Actual mode selected outside preview persists")
         precondition(store.recordReviewedAction(review()), "Actual reviews can reward the live game after leaving preview")
-        print("Actual preview checks passed: mode persistence, real review policy, deduplication, and saved-game isolation.")
+        print("Actual preview checks passed: preference restoration, real review policy, deduplication, and saved-game isolation.")
     }
 
     static func checkDemoRewards() {

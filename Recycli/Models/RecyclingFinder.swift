@@ -108,8 +108,7 @@ final class RecyclingFinder: NSObject, ObservableObject, @preconcurrency CLLocat
                     return
                 }
                 let coordinate: CLLocationCoordinate2D
-                if #available(iOS 26, *) { coordinate = first.location.coordinate }
-                else { coordinate = first.placemark.coordinate }
+                coordinate = first.placemark.coordinate
                 self.search(center: .init(latitude: coordinate.latitude, longitude: coordinate.longitude), name: first.name ?? query)
             } catch {
                 guard let self, !Task.isCancelled, self.requestID == id else { return }

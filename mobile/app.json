@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "Recycli",
+    "slug": "ecogotchi-orion",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f2f0d9"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.cabb007.ecogotchi",
+      "infoPlist": {
+        "NSLocalNetworkUsageDescription": "Connect to your Recycli review server on trusted Wi-Fi.",
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.cabb007.ecogotchi"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Photograph recycling actions and publicly accessible bin landmarks. Photos are uploaded only when you choose AI review or Share with community.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-secure-store",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": false,
+          "recordAudioAndroid": false,
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Find recycling locations nearby when you tap Use my location.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false,
+          "isAndroidForegroundServiceEnabled": false
+        }
+      ]
+    ]
+  }
+}

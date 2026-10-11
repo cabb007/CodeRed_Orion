@@ -75,7 +75,7 @@ struct VerificationConnection {
         UserDefaults.standard.set(baseURL.absoluteString, forKey: "ecogotchi.verification.url")
     }
 
-    private static var installationID: String {
+    static var installationID: String {
         let key = "ecogotchi.verification.installation"
         if let existing = UserDefaults.standard.string(forKey: key) { return existing }
         let id = UUID().uuidString.lowercased()
@@ -87,6 +87,8 @@ struct VerificationConnection {
         let service: String
         let status: String
         let reviewsRemaining: Int
+        let communityBins: Bool?
+        let aiReview: Bool?
     }
 
     // Tests the phone-to-server connection and access token without photos or AI tokens.
@@ -104,7 +106,7 @@ struct VerificationConnection {
             throw VerificationError.message(Self.connectionError(error))
         }
         guard let http = response as? HTTPURLResponse else {
-            throw VerificationError.message("This address didn’t return an Recycli server response.")
+            throw VerificationError.message("This address didn’t return a Recycli server response.")
         }
         if http.statusCode == 401 {
             throw VerificationError.message("The Mac responded, but the access token didn’t match. Copy RECYCLI_ACCESS_TOKEN from server/.env, not GEMINI_API_KEY.")
@@ -173,7 +175,7 @@ struct VerificationConnection {
 }
 
 // Do not forward photos or the access token to a redirected destination.
-private final class NoVerificationRedirects: NSObject, URLSessionTaskDelegate {
+final class NoVerificationRedirects: NSObject, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         completionHandler(nil)

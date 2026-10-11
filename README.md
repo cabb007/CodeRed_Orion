@@ -1,6 +1,6 @@
 # Recycli 🌱
 
-A pixel-art habitat game that encourages recycling through virtual pets, cleanup, and rewards. Built with SwiftUI for the CodeRED environment track.
+A pixel-art habitat game that encourages recycling through virtual pets, cleanup, and rewards. Built for the CodeRED environment track with separate Swift/SwiftUI and React Native/Expo apps.
 
 Capture a bin and an item, earn leaves, and care for three habitats: **Willow Grove**, **Coral Cove**, and **Snow Glade**. Friends roam, react to petting, and enjoy snacks; decorations can be moved and locked in place.
 
@@ -8,13 +8,27 @@ Capture a bin and an item, earn leaves, and care for three habitats: **Willow Gr
 
 [Run the app](#run-the-app) · [AI integration](#ai-integration) · [Architecture and backend](#architecture-and-backend) · [Developer mode](#developer-mode) · [Validation](#validation)
 
+The `prototype-2` integration combines main at `a3f557c` with prototype at `aa65368`. It retains Recycli branding, direct Gemini on iPhone, the two-photo visual-match flow, and the React Native feature additions in Swift.
+
+## Choose your app and phone
+
+| Device | React Native / Expo (`mobile/`) | Swift / SwiftUI (`Recycli/`) |
+| --- | --- | --- |
+| iPhone | Expo Go compatible with SDK 57, or a signed iOS build | iOS 17+; install using a Mac and Xcode 16+ |
+| Android | Expo Go or an Android build | Not supported |
+| Browser | Development preview; native maps/camera/sharing differ | Not supported |
+| Development computer | Windows, macOS or Linux can serve Expo to either phone | macOS/Xcode required for local iOS builds |
+
+These are separate implementations with separate local saves. Expo Go opens the React Native app; use Xcode to install Swift. The Expo app uses React 19.2.3, React Native 0.86.3 and Expo SDK 57, with AsyncStorage, SecureStore, Expo Camera/Audio/Haptics/Location and react-native-maps. Swift uses SwiftUI, Combine, AVFoundation, MapKit/Core Location, UserDefaults and Keychain. Both can use the optional Node.js/SQLite server. **Swift also supports a personal Gemini key directly on the iPhone; React Native AI review uses the server.** See the [stack and device setup guide](mobile/README.md).
+
 ## What you can do
 
 - Explore three animated habitats with pollution-dependent scenery, twelve pets, and a shared leaf wallet.
-- Pet, feed, pick up, and toss friends. Woodland and snow pets walk; ocean pets glide. Pets make short animal sounds in speech bubbles and show scattering hearts.
+- Pet, feed, pick up, and toss friends. Woodland and snow pets walk; ocean pets glide. A shared collision world keeps up to four residents apart. Condition-dependent faces and species-inspired written drop reactions accompany petting and feeding hearts.
+- View **Shop → Buy Leaves** packs of **100, 500 and 1,200 leaves**. Purchases and the proposed 80% conservation contribution are coming soon; no payments or donations occur.
 - Buy food and habitat-specific decorations with leaves. Drag decorations to arrange them, then lock their positions.
 - Clean virtual litter through recycling actions and unlock friends at 1, 3, and 6 actions in each habitat.
-- Find recycling locations on a map, inspect listed materials, and open directions in Apple Maps.
+- Find existing public recycling locations, inspect materials, and open directions. Add photographed bin landmarks on your phone and explicitly share them with a community server, without replacing public listings.
 - Review past actions in the Journal and test gameplay in an isolated developer preview.
 
 Each habitat accumulates one piece of litter every four hours, capped at six, including time away. Its condition changes from **Thriving** to **Littered**, **Tarnished**, and **Polluted**. A continuous progress bar shows the percentage cleaned. Habitat animations include leaves and fireflies, underwater bubbles and light, or falling snow; Reduce Motion is supported.
@@ -22,6 +36,24 @@ Each habitat accumulates one piece of litter every four hours, capped at six, in
 [Preview the habitat animations](Art/habitat-animations-preview.gif).
 
 ## Run the app
+
+### React Native: iPhone from Windows
+
+Install Node.js 24 and a version of Expo Go compatible with SDK 57. Check out `prototype-2`. From the repository root, run **each line separately** in PowerShell:
+
+```powershell
+cd .\mobile
+npm.cmd ci
+.\start-iphone.cmd
+```
+
+The portable launcher signs into Expo if needed and starts an Expo Go tunnel on a free port. Sign into the same Expo account in Expo Go on your iPhone. Wait for **Tunnel ready** and an **exp.direct** Metro address, then scan the new QR code with Camera. Keep the terminal running and both devices online. An old `exp://172.x.x.x` QR code points to a LAN server, not this tunnel.
+
+On macOS/Linux, from `mobile/`, run `npm ci`, `npx expo login`, then `npm run iphone`. For **Android**, install the same dependencies, run `npx expo start --go`, and scan with Expo Go on the same Wi-Fi; use `--tunnel` if LAN access fails. For a browser preview, use `npm run web`. Native Android builds need a Maps SDK key; follow [mobile setup](mobile/README.md#native-configuration).
+
+If Expo says its module is missing, run `npm.cmd ci` inside `mobile/` before starting it. Accepting an npx download prompt installs only a temporary CLI. There is no root `package.json`. For a timeout or blank screen, stop the old server with **Ctrl+C**, run the launcher, and scan its new tunnel QR code. Use `npx`, not `nxp`; browser preview uses `expo start --web`, not `expo --browser`. Detailed [iPhone troubleshooting](mobile/README.md#iphone-request-timeout-or-blank-screen) explains what output to collect if it still fails.
+
+### Swift: iPhone from a Mac
 
 You need a Mac with Xcode 16 or newer. The app targets iOS 17+.
 
@@ -36,7 +68,7 @@ The app and project are named Recycli. Legacy installation, UserDefaults, and Ke
 
 ## Demo and Actual modes
 
-Switch modes through **Recycle → gear → Recycling mode** or the **Dev** panel. The selection persists after relaunch and after leaving developer preview.
+Switch modes through **Recycle → gear → Recycling mode** or the **Dev** panel. Outside developer preview, the selection persists after relaunch. Preferences changed inside preview are temporary and restore on exit.
 
 | Behavior | Demo — default | Actual |
 | --- | --- | --- |
@@ -59,14 +91,14 @@ Outside developer preview, Demo rewards are saved and labeled as demo actions in
 4. Open **Shop** to buy food or decorations. Use food on a pet, or move and lock a decoration.
 5. Use the arrows beside the habitat title to visit Coral Cove and Snow Glade. Each habitat has its own progress and pets.
 
-## Set up Actual scans
+## Set up Actual scans on Swift
 
 The default Actual connection is **On iPhone**: the phone contacts Google's cloud API directly. This does **not** run Gemini on the device, and it does not require a Mac server or a USB cable after installation.
 
 1. Open **Recycle → gear**, select **Actual**, and choose **On iPhone**.
 2. Enter your personal [Gemini API key](https://aistudio.google.com/api-keys).
 3. Choose **Quick** or **Detailed**, then tap **Save & test connection**. Advanced settings accept a custom model name.
-4. Tap **Done**. If you opened settings from Dev, choose **Exit preview** before scanning for saved-game rewards.
+4. Tap **Done**. If you opened settings from Dev, choose **Exit preview**, then select Actual again in Recycle settings before scanning for saved-game rewards. Explicitly saved keys/connections remain available; preview scan mode and sound changes restore on exit.
 5. Capture the bin and item, inspect both photos, and tap **Send for review**.
 
 The key is saved in the iPhone Keychain. **Remove saved key** deletes it. The connection test checks model access without uploading photos or generating a review; it does not establish available generation quota or recognition accuracy.
@@ -77,13 +109,15 @@ Keep Recycli open: iOS may suspend a request when you switch apps, and quitting 
 
 To use the optional backend instead, select **Review server** and follow the [server setup guide](server/README.md). A local Mac server must remain reachable on the same network; a hosted HTTPS server removes that dependency.
 
+React Native uses **Recycle → Settings → AI review** with a reachable HTTPS review-server address and its separate access token. The server needs a Gemini API key for reviews. Keep the React Native scan screen open through review and saving; Swift alone currently supports returning to the habitat during a pending review. Both use bin → item capture and the reward rules below.
+
 ## AI integration
 
 Recycli uses a pretrained Gemini vision model. There is no custom-trained recycling classifier or on-device Core ML inference in the current app.
 
-1. **Capture:** AVFoundation provides the camera preview and still photos. The app resizes and JPEG-encodes the bin and item images.
+1. **Capture:** AVFoundation (Swift) or Expo Camera (React Native) provides the preview and still photos. The app resizes and JPEG-encodes the bin and item images.
 2. **Assess:** One Gemini request sends both photos with recycling instructions and a structured JSON response schema.
-3. **Validate:** Swift code in direct mode, or server code in server mode, checks the returned fields and applies a fixed reward policy.
+3. **Validate:** Swift code in direct mode, or server code for either app in server mode, checks the returned fields and applies a fixed reward policy.
 4. **Reward:** The app validates the receipt and checks for prior awards before updating the original habitat and saving the action.
 
 The model reports the item's material, bin type, evidence quality, apparent compatibility, contamination/suspicion flags, an explanation, and a sorting tip. **Gemini assesses the photos; application code controls the rewards.**
@@ -118,13 +152,14 @@ An approved action clears one piece of virtual litter if any remains. These valu
 
 | Component | Technology | Responsibility |
 | --- | --- | --- |
+| React Native interface and game | JavaScript, React, Expo | Separate iOS/Android app, AsyncStorage saves and SecureStore tokens |
 | iPhone interface and game | SwiftUI, Swift, Combine | Habitat, pets, shop, journal, and review state |
 | Camera and scan audio | AVFoundation | Live preview, photo capture, and feedback sounds |
 | AI review | Google Gemini API via URLSession or server fetch | Structured visual assessment of two photos |
 | Local persistence | Codable JSON in UserDefaults | Game progress, preferences, and direct-review history |
 | Credentials | iOS Keychain | Personal API key or optional server access token |
 | Optional review backend | Node.js built-in HTTP server | Submission validation, Gemini calls, reward decisions, and limits |
-| Optional backend storage | SQLite | Review receipts, photo hashes, and attempt history |
+| Optional backend storage | SQLite | Review receipts/hashes/attempts and explicitly shared bin landmarks/photos |
 | Recycling map | MapKit, Core Location, Overpass, Houston public data | Location search and directions |
 
 ```mermaid
@@ -156,12 +191,15 @@ The backend requires **Node.js 22.13+**, uses built-in modules, and has no third
 | `GET /health` | Basic reachability check |
 | `GET /v1/status` | Authenticated service status and remaining review attempts |
 | `POST /v1/recycling/verify` | Authenticated two-photo submission and review |
+| `GET/POST /v1/bins`, `GET /v1/bins/{id}/photo`, `DELETE /v1/bins/{id}` | Community landmarks, photos and submitting-installation removal |
+
+Community bins work with the server access token even when `GEMINI_API_KEY` is unset; AI reviews then report that review is not configured. Status includes `communityBins` and `aiReview`.
 
 The review endpoint also requires an installation ID. Default server limits are 30 AI attempts across its database per rolling 24 hours, ten approved rewards per installation per rolling 24 hours, six submissions per minute per network address, and two simultaneous AI requests. These prototype controls use a shared access token and client-supplied installation IDs, not authenticated user accounts. See [server/README.md](server/README.md) for configuration, persistence, retry behavior, and hosting details.
 
 ### Privacy and current limits
 
-Photos upload only after **Send for review**. The live camera preview stays on the phone, and review photos are not added to the photo library. The app holds submitted images in memory until completion or discard; the optional server processes images in memory without saving or logging them. Review results and image hashes are retained locally or in SQLite, depending on the connection.
+Photos upload only after **Send for review**. The live camera preview stays on the phone, and review photos are not added to the photo library. Swift holds submitted images in memory until completion or discard; React Native uses temporary cache files and cleans them up when the scan finishes or closes. The optional server processes **review photos** in memory without saving or logging them. **Shared community landmark photos are stored in SQLite** and are visible to other users of that server; phone-only landmarks stay local. Review results and image hashes are retained locally or in SQLite, depending on the connection.
 
 Gemini requests set `store: false`; this is not a guarantee of zero retention by Google. [Google's API data terms](https://ai.google.dev/gemini-api/terms) apply. Avoid including faces or personal details in captures.
 
@@ -175,6 +213,12 @@ The app queries OpenStreetMap recycling points through Overpass and supplements 
 
 Location is requested only after **Use my location**, with no background tracking. Overpass coordinates are rounded to three decimal places; city/ZIP searches use Apple Maps. Results are cached in memory for 15 minutes, with labeled offline results available for up to 24 hours until the app quits. Fresh searches and map tiles need internet. Coverage and accepted materials vary, so check the facility's signs and source listing.
 
+### Photographed bin landmarks
+
+Use **Find a bin → Add a bin landmark** to photograph a bin, choose/confirm its coordinates and public access, and record its name, labeled materials and notes. Saving creates a phone-only landmark. Existing public recycling locations remain on the map.
+
+For optional sharing, configure **Community map connection** with the server address and access token, then explicitly select **Share with community**. Sharing publishes the photo, precise location and details to phones using that server. Shared pins are labeled unverified; you can remove your own submissions. Cached copies may remain on other phones. This feature never calls Gemini or awards leaves. Your personal direct-Gemini key is not a community access token. See [community storage and setup](server/README.md#community-bin-landmarks-both-apps).
+
 ## Developer mode
 
 Open **Dev** to start a temporary gameplay preview. Closing its panel keeps the preview active; **Exit preview** restores your saved game. Preview purchases, food, pet unlocks, decoration layouts, and rewards do not overwrite saved progress, including after relaunch.
@@ -187,7 +231,7 @@ Controls let you:
 - Switch Demo/Actual, test camera capture, or use offline sample artwork through **Guided capture demo**.
 - Load a thriving preview or reset the temporary habitat.
 
-Actual reviews in preview send real photos and consume quota. Sample artwork and reward-only previews never call Gemini. Exiting or resetting preview discards its pending review. A saved-game review that finishes during preview updates the saved game without adding rewards to the preview. The Demo/Actual preference persists separately from temporary gameplay changes.
+Actual reviews in preview send real photos and consume quota. Sample artwork and reward-only previews never call Gemini. Exiting or resetting preview discards its pending review. A saved-game review that finishes during preview updates the saved game without adding rewards to the preview. Scan mode and sound changes made in Swift preview restore on exit. React Native preview always simulates reviews and never calls Gemini. Saved landmark creation, sharing and removal are blocked during preview in both apps.
 
 ## Project guide
 
@@ -197,53 +241,35 @@ Actual reviews in preview send real photos and consume quota. Sample artwork and
 | [Recycli/Models](Recycli/Models) | Game state, review clients, receipt policy, capture sequence, and location search |
 | [Recycli/Resources/GeminiReview.json](Recycli/Resources/GeminiReview.json) | Direct Gemini instructions and response schema |
 | [Recycli/Assets.xcassets](Recycli/Assets.xcassets) | Bundled backgrounds, sprite atlases, and app icon |
-| [server](server) | Optional Node.js/SQLite review backend and tests |
+| [mobile](mobile) | Separate React Native/Expo iOS and Android app, setup, tests and launcher |
+| [server](server) | Optional Node.js/SQLite review and community-bin backend |
+| [NATIVE_PARITY.md](NATIVE_PARITY.md) | React Native features integrated into Swift and platform differences |
 | [Tests](Tests) | Swift checks for game state, capture, networking, and review behavior |
 | [Art](Art) and [Design](Design) | Generated-art prompts, manifests, previews, and source artwork |
 
 Art is bundled locally and rendered with nearest-neighbor interpolation. Prompt records include [pixel art](Design/pixel-art-prompts.txt), [habitat states](Design/habitat-state-prompts.txt), [expanded habitats](Art/habitat-expansion-prompts.json), and [condition variants](Art/habitat-condition-prompts.json).
 
-When changing AI assessment rules, keep the direct prompt/schema in `Recycli/Resources/GeminiReview.json` synchronized with `server/gemini.mjs`. Keep Swift reward rules in `GeminiReview.swift` and `RecyclingVerification.swift` aligned with `server/policy.mjs`.
+When changing AI assessment rules, keep the direct prompt/schema in `Recycli/Resources/GeminiReview.json` synchronized with `server/gemini.mjs`. Keep Swift reward rules in `GeminiReview.swift` and `RecyclingVerification.swift` aligned with `server/policy.mjs` and `mobile/src/game.js`. The cross-stack contract tests in `mobile/tests/review-contract.test.mjs` exercise both sides of the shared server contract.
 
 ## Validation
 
-Run the Swift checks from the repository root on a Mac with a Swift toolchain. These exercise models and networking without launching the iPhone app:
+From the repository root on macOS:
 
 ```sh
-swiftc Recycli/Models/HabitatState.swift Tests/HabitatStateChecks.swift -o /tmp/recycli-state-checks
-/tmp/recycli-state-checks
-
-swiftc Recycli/Models/HabitatState.swift Recycli/Models/RecyclingVerification.swift Recycli/Models/HabitatStore.swift Tests/HabitatStoreChecks.swift -o /tmp/recycli-store-checks
-/tmp/recycli-store-checks
-
-swiftc Recycli/Models/HabitatState.swift Recycli/Models/RecyclingVerification.swift Recycli/Models/HabitatStore.swift Tests/BackgroundReviewChecks.swift -o /tmp/recycli-background-checks
-/tmp/recycli-background-checks
-
-swiftc Recycli/Models/HabitatState.swift Tests/HabitatExpansionChecks.swift -o /tmp/recycli-expansion-checks
-/tmp/recycli-expansion-checks
-
-swiftc Recycli/Models/PetMotion.swift Tests/PetMotionChecks.swift -o /tmp/recycli-pet-checks
-/tmp/recycli-pet-checks
-
-swiftc Recycli/Models/RecyclingLocations.swift Tests/RecyclingLocationChecks.swift -o /tmp/recycli-location-checks
-/tmp/recycli-location-checks
-
-swiftc Recycli/Models/RecyclingVerification.swift Recycli/Models/RecyclingCaptureDraft.swift Tests/RecyclingCaptureChecks.swift -o /tmp/recycli-capture-checks
-/tmp/recycli-capture-checks
-
-swiftc Recycli/Models/RecyclingVerification.swift Recycli/Models/VerificationConnection.swift Tests/VerificationConnectionChecks.swift -o /tmp/recycli-connection-checks
-/tmp/recycli-connection-checks
-
-swiftc Recycli/Models/RecyclingVerification.swift Recycli/Models/VerificationConnection.swift Recycli/Models/GeminiDirectConnection.swift Recycli/Models/GeminiReview.swift Tests/GeminiReviewChecks.swift -o /tmp/recycli-gemini-checks
-/tmp/recycli-gemini-checks
+bash scripts/check-swift.sh
+xcodebuild -project Recycli.xcodeproj -scheme Recycli -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 
-Run backend checks separately:
+From `mobile/`, after `npm ci`:
 
 ```sh
-(cd server && npm test)
+npm test
+npm run lint
+npm run export:all
 ```
 
-Tests cover game persistence, preview isolation, pet motion, capture ordering, receipt validation, duplicate prevention, background review, retry/cancellation, and review limits. Network tests use mocked responses and require no Gemini key. They do not measure visual recognition accuracy.
+From `server/`, run `npm test` with Node.js 22.13+ (CI uses Node 24). On Windows, use `npm.cmd` in place of `npm` if PowerShell blocks the npm script.
 
-Before presenting, check the physical iPhone's camera permissions, gestures, sound, haptics, Reduce Motion, and small-screen layouts. Test Actual mode with real photos over Wi-Fi or cellular, including unclear results and network failures. Confirm that rewards save once and that developer preview restores the original game.
+Checks cover persistence, preview isolation, pet collisions, capture ordering, two-photo server/client compatibility, reward receipts, duplicate prevention, background review, community landmarks and request limits. Mocked tests use no Gemini key and do not establish recognition accuracy. GitHub Actions runs Swift checks plus an iOS Simulator build, and React Native tests/lint plus iOS/Android/web exports and server tests.
+
+Before presenting, test camera/location permissions, maps, four-pet gestures, feeding, sound/haptics, Reduce Motion and small-screen layouts on physical devices. Test Actual mode with a valid key and real photos, including unclear results and network failure. Confirm rewards apply once with the actual added amount and updated total, and preview restores saved gameplay and preferences.
