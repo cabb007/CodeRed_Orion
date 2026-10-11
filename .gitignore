@@ -9,3 +9,5 @@ xcuserdata/
 !.env.example
 server/data/
 node_modules/
+.expo/
+mobile/dist/

@@ -1,0 +1,27 @@
+name: React Native checks
+on:
+  pull_request:
+    paths: ['mobile/**', 'server/**', '.github/workflows/mobile-checks.yml']
+  push:
+    paths: ['mobile/**', 'server/**', '.github/workflows/mobile-checks.yml']
+jobs:
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run lint
+      - run: npm run export:ios
+        env:
+          EXPO_NO_TELEMETRY: '1'
+      - run: npm test
+        working-directory: server

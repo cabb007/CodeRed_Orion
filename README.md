@@ -2,6 +2,10 @@
 
 A pocket wilderness that grows through real-world environmental care. Native SwiftUI iPhone prototype for the CodeRED environment track.
 
+## Run from Windows with React Native
+
+The `mobile/` folder contains a JavaScript React Native port using Expo. Run it on your iPhone through Expo Go from Windows, with the original habitat art, camera scan flow, friends, decorations, journal, and local saves. Demo mode needs no server or Apple Developer membership. See [Windows + iPhone setup](mobile/README.md) for login, QR-code, tunnel, optional AI review, and validation instructions. The SwiftUI project below remains available.
+
 ## Run on iPhone or simulator
 
 1. Install Xcode 16 or newer and open `EcoGotchi.xcodeproj`.
