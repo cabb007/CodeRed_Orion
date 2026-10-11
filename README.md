@@ -31,22 +31,38 @@ Windows can run the React Native development server for **both iPhone and Androi
 
 ## Set up React Native on an iPhone
 
-1. Install Node.js 24 on your development computer (matching this repository's CI), and install Expo Go on your iPhone with support for this project's Expo SDK 57.
-2. Check out `prototype`. In a terminal at the repository root, install the app dependencies and start the server:
+1. Install Node.js 24 on your development computer (matching this repository's CI). Install or update [Expo Go](https://apps.apple.com/app/expo-go/id982107779) on an iPhone running iOS 16.4 or newer, and use an Expo Go version supporting this project's Expo SDK 57.
+2. Check out `prototype`. From the repository root, install dependencies, sign into Expo CLI and start the iPhone launcher:
 
 ```powershell
 # Windows PowerShell, from the repository root
 cd .\mobile
 npm.cmd ci
-npx.cmd expo start --clear
+npx.cmd expo login
+npm.cmd run iphone
 ```
 
-On macOS/Linux, use `cd mobile`, `npm ci` and `npx expo start --clear` instead.
+On macOS/Linux, use `cd mobile`, `npm ci`, `npx expo login` and `npm run iphone` instead.
 
-3. Put the computer and iPhone on the same Wi-Fi. Scan the terminal QR code with the iPhone Camera app and open it in Expo Go. Keep the development server running.
-4. Allow camera access when recycling or adding a landmark, and allow foreground location when you tap **Use my location**. Demo recycling needs no server or Gemini key.
+3. Open Expo Go on the iPhone and sign into the **same Expo account** as the terminal. This is required on a physical iPhone; check the terminal account with `npx.cmd expo whoami` (or `npx expo whoami` on macOS/Linux). See [Expo's sign-in requirements](https://docs.expo.dev/troubleshooting/expo-go-sign-in-required/).
+4. Keep both devices connected to the internet. The iPhone launcher uses `expo start --go --tunnel --clear` to target Expo Go and avoid local Wi-Fi/firewall connection problems. Wait for **Tunnel ready**, scan the **new** QR code with the iPhone Camera app and open it in Expo Go. Keep the terminal running while using the app.
+5. Allow camera access when recycling or adding a landmark, and allow foreground location when you tap **Use my location**. Demo recycling needs no EcoGotchi server or Gemini key.
 
-If LAN access fails, stop Expo and run `npx.cmd expo start --tunnel --clear` on Windows, or `npx expo start --tunnel --clear` on macOS/Linux. If Expo asks for login, use `npx.cmd expo login` (or `npx expo login`) and sign into Expo Go with the same account. Expo Go is a development host; a standalone iPhone app requires an iOS build and Apple signing.
+Expo Go is a development host; a standalone iPhone app requires an iOS build and Apple signing. The Swift app has its own setup below.
+
+### iPhone request timeout or blank screen
+
+Stop the old Expo process with **Ctrl+C**, then run `npm.cmd run iphone` from `mobile/` (or `npm run iphone` on macOS/Linux). Until you pull this launcher update, the equivalent command is:
+
+```powershell
+npx.cmd expo start --go --tunnel --clear
+```
+
+Wait for **Tunnel ready** before scanning the new QR code; an earlier QR code can still point to the old LAN address. Tunnels require internet on both devices. The project's `@expo/ngrok` dependency is installed by `npm ci`. See [Expo tunneling](https://docs.expo.dev/more/expo-cli/#tunneling).
+
+If the terminal reports a tunnel startup error, keep that exact error for troubleshooting. If Expo Go asks for sign-in, match the account on both devices, then retry; restart Expo after switching terminal accounts. If it reports an incompatible SDK, check that Expo Go supports SDK 57.
+
+If the terminal finishes bundling for iOS but the phone still shows a blank screen, inspect the terminal and Expo Go error screen for a JavaScript or missing-module error. Report that text along with whether **Tunnel ready** and **iOS Bundled** appeared; this distinguishes connectivity problems from an app runtime failure.
 
 ## Set up React Native on an Android phone
 
@@ -77,6 +93,8 @@ cd .\mobile
 npm.cmd ci
 npx.cmd expo start --clear
 ```
+
+For a physical iPhone, sign into the same Expo account on the computer and in Expo Go, then use `npm.cmd run iphone` from `mobile/` and scan its new tunnel QR code. See [iPhone setup](#set-up-react-native-on-an-iphone) and [timeout troubleshooting](#iphone-request-timeout-or-blank-screen).
 
 On later runs, start Expo from `mobile/`; repeat `npm.cmd ci` after pulling dependency or lockfile changes. The committed lockfile keeps Expo and React Native versions compatible.
 
