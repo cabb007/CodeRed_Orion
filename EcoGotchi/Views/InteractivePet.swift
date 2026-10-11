@@ -170,8 +170,11 @@ struct InteractivePet: View {
                     let arrived = moving.walk(toward: target, speed: animal.id == "maple" ? 27 : 21,
                                               seconds: seconds, in: bounds)
                     walkPhase += Double(abs(moving.position.x - previousX)) * 0.32
-                    bodyState = world.move(animal.id, body:moving, bounds:bounds, size:size)
-                    if arrived {
+                    let resolved = world.move(animal.id, body:moving, bounds:bounds, size:size)
+                    bodyState = resolved
+                    // Choose another walk after a neighbor blocks this destination.
+                    // Otherwise the pet can keep trying the same occupied spot forever.
+                    if arrived || abs(resolved.position.x - moving.position.x) > 0.1 {
                         walkTarget = nil
                         nextWalkAt = now.addingTimeInterval(Double.random(in: 1.2...3.0))
                     }

@@ -168,17 +168,12 @@ Atlas content is cropped once in memory using `GameSprite.bounds`, then drawn wi
 
 ## SwiftUI and server validation
 
-Run the Foundation-only game logic checks without Xcode:
+Run all native logic, persistence and networking checks on macOS:
 
 ```sh
-swiftc EcoGotchi/Models/HabitatState.swift Tests/HabitatStateChecks.swift -o /tmp/ecogotchi-checks
-/tmp/ecogotchi-checks
-
-swiftc EcoGotchi/Models/HabitatState.swift EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/HabitatStore.swift Tests/HabitatStoreChecks.swift -o /tmp/ecogotchi-store-checks
-/tmp/ecogotchi-store-checks
-
-swiftc EcoGotchi/Models/RecyclingVerification.swift EcoGotchi/Models/RecyclingCaptureDraft.swift Tests/RecyclingCaptureChecks.swift -o /tmp/ecogotchi-capture-checks
-/tmp/ecogotchi-capture-checks
+bash scripts/check-swift.sh
 ```
 
-Game and store checks cover condition boundaries, pollution timing, persistent/idempotent demo rewards, mode switching, reviewed rewards, malformed/duplicate receipt rejection, purchases, old saves, and developer-preview persistence isolation. Capture checks cover bin-first ordering, incomplete captures, identical-photo rejection, stable retry IDs/payloads, and restarting. Run `npm test` in `server` for mocked Gemini and HTTP integration checks, including persistent review limits, concurrent last-slot requests, and truncated model responses. The iPhone Debug build compiles with Xcode. Camera, animation, haptic, and sound behavior still need physical-iPhone testing. Optional Gemini accuracy checks also need a configured server. Check permission denial, rejected/unclear reviews, network retry, reward persistence, and small-screen layouts before presenting.
+The [Swift checks workflow](.github/workflows/swift-checks.yml) runs these checks and builds the iOS app for Simulator. Checks cover old saves, habitat progression, rewards/deduplication, food/layouts, pet physics/collisions, expression bounds, Dev Mode preferences and stale callbacks, capture order, public-location cache/backoff, phone landmarks and authenticated community requests. React Native's 63 tests and the server's 46 mocked integration tests pass locally; the first Swift checks and Simulator build also passed during this port.
+
+Run `npm test` in `server/` for mocked Gemini, HTTP and community-bin integration checks. Physical-iPhone camera, permissions, gesture appearance, sound/haptics and live sharing still need device testing. Optional Gemini accuracy checks need a configured server. See [native parity validation](NATIVE_PARITY.md#validation) for the device checklist.
