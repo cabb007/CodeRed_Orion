@@ -53,7 +53,7 @@ function EcoGotchi() {
       {store.isDeveloperMode && <Button secondary disabled={store.modeChanging} onPress={() => store.setDeveloperMode(false).catch(store.reportError)}>Dev Mode · Turn off & discard changes</Button>}
       <View style={[styles.row,{alignItems:'flex-end',gap:8}]}>
         <View style={{flex:1}}><Button secondary onPress={() => open('friends')}>Friends</Button></View>
-        <Button style={{minHeight:80}} onPress={() => open('recycling')}>{'RECYCLE\n' + (store.isDeveloperMode ? 'Dev Mode' : store.preferences.mode === 'demo' ? '+20 leaves' : 'AI review')}</Button>
+        <Button style={{minHeight:80}} onPress={() => open('recycling')}>RECYCLE</Button>
         <View style={{flex:1}}><Button secondary onPress={() => open('shop')}>Shop</Button></View>
       </View>
     </SafeAreaView>

@@ -178,7 +178,9 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
   if (result) return <ScrollView contentContainerStyle={[styles.stack, { paddingBottom: 24 }]}>
     <Sprite name={result.leaves > 0 ? 'fern' : 'pip'} size={110} style={{ alignSelf: 'center' }} />
     <Label style={styles.heading}>{result.duplicate ? 'Already collected!' : result.demo ? 'Scan complete!' : result.status === 'approved' ? 'AI review passed!' : result.localAcceptance === 'unknown' ? 'Bin rules unclear' : 'This action did not qualify'}</Label>
-    <Panel style={{ backgroundColor: colors.sage }}><Label style={styles.subheading}>{result.duplicate ? 'This action already earned leaves' : `${result.leaves} leaves${result.preview ? ' (temporary)' : ' earned'}`}</Label></Panel>
+    <Panel style={{ backgroundColor: colors.sage, gap: 8 }}><Label accessibilityLiveRegion="polite" style={styles.subheading}>{result.duplicate ? 'This action already earned leaves' : result.rewardOnly ? 'Reward preview · no leaves added' : result.leaves > 0 ? `+${result.leaves} leaves added to your ${result.preview ? 'temporary' : 'total'} leaf points.` : 'No leaves added'}</Label>
+      {!result.rewardOnly && <Label>{result.preview ? 'Temporary total' : 'Total'}: {store.game.points} leaves</Label>}
+    </Panel>
     {result.demo ? <Label>{result.rewardOnly ? 'Display only. No leaves or progress were changed.' : result.preview ? 'Dev Mode scans change only your temporary progress.' : 'All three captures were accepted in demo mode. Your progress is saved on this phone.'}</Label> : <>
       <Label>{result.itemName} · {result.material}</Label><Label>{result.explanation}</Label>
       <Panel style={{ gap: 8 }}><Label style={styles.subheading}>Sorting tip</Label><Label>{result.tip}</Label><Label style={styles.caption}>Bin evidence: {result.labelEvidence}</Label></Panel>
@@ -189,7 +191,7 @@ export default function Recycling({ sample = false, rewardPreview = false, onClo
 
   return <View style={{ flex: 1 }}>
     <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={[styles.stack, { paddingBottom: 20 }]}>
-      <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Label style={styles.subheading}>{store.isDeveloperMode ? 'Preview scan' : demo ? 'Demo scan · +20 leaves' : 'AI photo review'}</Label>
+      <View style={[styles.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}><Label style={styles.subheading}>{store.isDeveloperMode ? 'Dev Mode scan' : demo ? 'Demo scan' : 'AI photo review'}</Label>
         <Button secondary disabled={busy || frames.length > 0} onPress={() => setShowSettings(true)}>Settings</Button></View>
       <View style={styles.row}>{TITLES.map((title, i) => <Label key={title} style={[styles.caption, { flex: 1, fontWeight: i === step ? '800' : '400' }]}>{frames.length > i ? '✓' : i + 1} {title}</Label>)}</View>
       {!demo && !store.preferences.url && <Panel style={styles.stack}><Label>Connect your review server before capturing an action.</Label><Button onPress={() => setShowSettings(true)}>Set up AI connection</Button></Panel>}

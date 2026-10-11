@@ -1,5 +1,7 @@
 # EcoGotchi on iOS and Android
 
+**Built with Swift/SwiftUI for native iOS and React Native/Expo for iOS and Android.**
+
 React Native / Expo SDK 57 port of the Swift prototype. The app includes Willow Grove, Coral Cove, Snow Glade, interactive pets, food, movable decorations, habitat effects, recycling capture, and a recycling-location finder. Swift and the Node verification server remain separate.
 
 ## Run on your phone from Windows
@@ -29,20 +31,21 @@ Dependencies and the lockfile pin React Native **0.86.3** for this Expo SDK. Use
 ## Features
 
 - **Three habitats:** use the habitat title or Shop → Habitats to switch. Pollution, pet unlocks, decorations, and positions are tracked for each habitat. Leaves and the journal are shared.
-- **Twelve pets:** each habitat has four friends unlocked at 0, 1, 3, and 6 recycling actions in that habitat. Pets shelter at high pollution, apart from the starter.
-- **Pet interaction:** tap for affection; drag and release to drop or flick. Pets roam and stay within the play area. Ocean motion uses reduced gravity. Motion pauses behind panels and in the background, and respects Reduce Motion.
+- **Twelve pets:** each habitat has four friends unlocked at 0, 1, 3, and 6 recycling actions in that habitat. At most four animals are active at once. Faces reflect Thriving, Littered, Tarnished or Polluted habitat conditions. Pets shelter at high pollution, apart from the starter.
+- **Pet interaction:** tap for affection; drag and release to drop or flick. Animal collisions prevent overlaps while allowing all four residents to roam. Drops show species-inspired speech bubbles. Ocean motion uses reduced gravity. Motion pauses behind panels and in the background, and respects Reduce Motion.
 - **Food:** buy one of four snacks with earned leaves, tap Use, then tap an available pet. Snacks and meal counts persist. Feeding does not award leaves or recycling progress.
 - **Twelve decorations:** buy habitat-specific decorations, drag them into position, tap to lock/unlock, or reset the current layout in Shop. Normalized coordinates survive viewport changes and relaunches.
 - **Habitat effects:** leaves, fireflies, grass and ripples; ocean bubbles, kelp, rays and sand; snow, wind and ice sparkles. Pollution changes the effects and artwork. Cleanup produces a short sparkle effect.
-- **Find a bin:** request foreground location or submit a city/state or ZIP search; choose 5, 10 or 25 km. Native maps show pins and the list gives materials, access details, source links and directions. No location is requested until Use my location is tapped. OpenStreetMap data is supplemented by city-owned Houston facilities nearby.
-- **Recycling:** capture Your bin → Your item → Disposal, with an optional three-second final shutter timer. A frozen scan overlay, progress, success effects, sound and haptics mark each capture.
+- **Find a bin:** request foreground location or submit a city/state or ZIP search; choose 5, 10 or 25 km. Native maps show pins and the list gives materials, access details, source links and directions. Add photo bin landmarks on the phone, or explicitly share them with a connected community server. No location is requested until Use my location is tapped. OpenStreetMap data is supplemented by city-owned Houston facilities nearby.
+- **Recycling:** the main button says RECYCLE. Capture Your bin → Your item → Disposal, with an optional three-second final shutter timer. A frozen scan overlay, progress, success effects, sound and haptics mark each capture. After a demo reward is saved, the result confirms +20 leaves added and shows the updated total.
+- **Buy Leaves display:** Shop shows three leaf packs, with a smaller 80% contribution note below them. Buttons show a coming-soon message. No payments, purchased leaves or donation transfers are implemented.
 - **Dev Mode:** temporary habitats, pollution/timing, unlocks and pet visibility, wallets, custom rewards/cleanup, food stock, decorations, camera/sample/reward screens, animation controls, grid, labels and sprite scale. Toggle Dev Mode off to restore saved progress and settings.
 
-These features match the existing Swift prototype's scope. Random weather, an account-backed leaderboard, an XP/tier progression system, paid points and donation payments are separate roadmap work.
+The app ports the core Swift gameplay and adds photo bin landmarks, animal reactions/collisions, isolated Dev Mode and a display-only Buy Leaves section. Random weather, an account-backed leaderboard, an XP/tier progression system, real-money leaf purchases and donation fulfillment remain roadmap work.
 
 ## Demo and AI modes
 
-Demo is the default. Three captures automatically earn 20 leaves and clear one piece of litter; demo does not classify photos or require a server. Developer sample captures use artwork and change only the temporary developer habitat.
+Demo is the default. Three captures automatically earn 20 leaves and clear one piece of litter; demo does not classify photos or require a server. The RECYCLE button and demo scan heading do not advertise +20 leaves in advance. Once the reward is saved, the result says **+20 leaves added to your total leaf points** and displays your updated total. Duplicate scans do not claim a new award, and zero-reward results say no leaves were added. Dev Mode sample captures use artwork and affect only the temporary habitat and leaf balance.
 
 AI review uses the existing Node server and Gemini adapter. From the repository root in a separate terminal:
 
@@ -55,7 +58,7 @@ npm.cmd start
 
 Expose the server at an HTTPS address with authentication enabled. In Recycle → Settings select AI review, enter that HTTPS base address and the access token, and Save & test connection. The Gemini key stays on the server. The phone token uses SecureStore. Browser AI review is disabled.
 
-Capture the same bin/item/disposal sequence within ten minutes, inspect the photos, and Send for review. Approved reviews earn material-based leaves. Network retries reuse the submission; a received receipt can retry a failed local save while that screen stays open. Closing the screen discards its pending scan. See [server/README.md](../server/README.md) for verification limits.
+Capture the same bin/item/disposal sequence within ten minutes, inspect the photos, and Send for review. Approved reviews earn material-based leaves, and the result shows the actual awarded amount and updated total. Network retries reuse the submission; a received receipt can retry a failed local save while that screen stays open. Closing the screen discards its pending scan. See [server/README.md](../server/README.md) for verification limits.
 
 ## Native configuration
 
@@ -82,7 +85,7 @@ npm.cmd run check:dependencies
 npm.cmd run export:all
 ```
 
-The 44 automated tests cover saved-data compatibility, per-habitat progression, feeding caps and concurrent writes, placements/locks, physics bounds, recycling-location parsing/cache/backoff, one-shot location cancellation, rewards and the existing verification client. Lint, dependency compatibility and web/iOS/Android exports passed for this update, including Hermes bytecode.
+The current suite contains **63 automated tests** covering saved-data compatibility, per-habitat progression, feeding caps and concurrent writes, placements/locks, animal expressions, collision bounds and four-resident roaming, photo bin storage/sharing, recycling-location parsing/cache/backoff, one-shot location cancellation, rewards, verification and Dev Mode isolation. The latest test and lint checks passed. iOS/Android/web exports, including Hermes bytecode, passed for the Dev Mode and Buy Leaves implementation. Later text/layout changes were lint-checked; exported bundles do not confirm physical-device behavior.
 
 Device execution and visual UI behavior have not yet been verified. On both platforms, test foreground location permission denial, map pins/directions, camera/background/retry flows, all captures, feeding, drag/flick, relaunch persistence, Dev Mode isolation, sound and Reduce Motion. The browser tool could not reach the validation server in this session. Browser preview supports demo/sample flows and a location list rather than a native map.
 
@@ -110,15 +113,14 @@ Each active habitat displays at most four eligible animals, including Dev Mode. 
 
 Animal sizes now account for the number of visible residents and leave room for all four to roam. Collision resolution separates animals sideways while preserving their height, so an animal cannot become stuck above its ground level in the falling state. Dropped animals still land and can resume roaming. Normal brief pauses, foreground activity, the roaming toggle and Reduce Motion remain respected.
 
-
 ## Dev Mode and Buy Leaves
 
 Open **Dev Mode** from the main screen, then use its on/off switch. Opening the panel alone does not enable it. Turning it on copies your saved gameplay and preferences into memory; developer changes to leaves, food, recycling actions, unlocks, habitat state, decorations, layout and scan sounds stay in that copy. AI review is disabled and server credentials are not exposed in Dev Mode. Saved bin creation, sharing and removal are blocked.
 
 Turning Dev Mode off discards its temporary changes. Turning it on again starts from your real save; relaunching always starts in real mode. Normal elapsed-time pollution still applies to your real habitat when real mode resumes. Switching waits for previously accepted real saves, and callbacks captured in an old mode cannot write into a new mode.
 
-**Shop → Buy Leaves** displays packs of 100, 500 and 1,200 leaves. Tapping Buy displays a coming-soon message within the selected pack. This is a display-only feature: no checkout, external payment link, payment SDK, charge, currency grant or donation transfer is implemented. Prices remain unspecified.
+**Shop → Buy Leaves** displays packs of 100, 500 and 1,200 leaves first, under a short introduction. Tapping Buy displays a coming-soon message within the selected pack. This is a display-only feature: no checkout, external payment link, payment SDK, charge, currency grant or donation transfer is implemented. Prices remain unspecified.
 
-The section states the future plan to direct **80% of each leaf purchase** to organizations supporting preservation, conservation and wildlife reserves. It also clearly states that purchases and donations are coming soon. Organization selection, pricing, payment processing and donation fulfillment remain future work.
+A smaller caption below the packs states the future plan to direct **80% of each leaf purchase** to organizations supporting preservation, conservation and wildlife reserves. Keeping this note below the options gives the leaf packs priority. The caption also states that purchases and donations are coming soon. Organization selection, pricing, payment processing and donation fulfillment remain future work.
 
-Validation for this update: 63 mobile tests cover existing functionality plus isolated developer mutations/preferences, queued real saves, stale callbacks and mode transitions. Lint and iOS/Android/web export checks must pass before applying the update. A physical device should still be used to check the switch, settings restoration and Buy Leaves interactions.
+Dev Mode tests cover isolated gameplay/preferences, queued real saves, stale callbacks and mode transitions. A physical device should still be used to check the switch, settings restoration, post-scan reward confirmation and Buy Leaves interactions.
