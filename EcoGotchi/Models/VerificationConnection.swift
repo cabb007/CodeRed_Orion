@@ -75,7 +75,7 @@ struct VerificationConnection {
         UserDefaults.standard.set(baseURL.absoluteString, forKey: "ecogotchi.verification.url")
     }
 
-    private static var installationID: String {
+    static var installationID: String {
         let key = "ecogotchi.verification.installation"
         if let existing = UserDefaults.standard.string(forKey: key) { return existing }
         let id = UUID().uuidString.lowercased()
@@ -173,7 +173,7 @@ struct VerificationConnection {
 }
 
 // Do not forward photos or the access token to a redirected destination.
-private final class NoVerificationRedirects: NSObject, URLSessionTaskDelegate {
+final class NoVerificationRedirects: NSObject, URLSessionTaskDelegate {
     func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse,
                     newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
         completionHandler(nil)

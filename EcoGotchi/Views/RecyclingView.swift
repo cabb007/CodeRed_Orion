@@ -10,11 +10,11 @@ struct RecyclingView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @StateObject private var camera = RecyclingCamera()
     @StateObject private var feedback = ScanFeedback()
-    @AppStorage("ecogotchi.scanSounds") private var scanSounds = true
+    @State private var modeSessionID: UUID?
     @State private var draft = RecyclingCaptureDraft()
     @State private var showSettings = false
     @State private var inspecting: RecyclingCaptureStep?
-    @State private var configured = VerificationConnection.isConfigured
+    @State private var configured = false
     @State private var result: RecyclingAssessment?
     @State private var completedPreview = false
     @State private var completedDemo = false
@@ -90,17 +90,29 @@ struct RecyclingView: View {
             .task {
                 guard !prepared else { return }
                 prepared = true
+                modeSessionID = store.modeSessionID
+                configured = !store.isDeveloperMode && VerificationConnection.isConfigured
                 if store.isDeveloperMode && showRewardPreview {
                     earnedLeaves = store.developer.actionReward
                     completedPreview = true
                 } else if launchCameraOnOpen { startCameraIfNeeded() }
             }
             .sheet(isPresented: $showSettings, onDismiss: {
-                configured = VerificationConnection.isConfigured
+                configured = !store.isDeveloperMode && VerificationConnection.isConfigured
                 startCameraIfNeeded()
                 finishDemoIfReady()
-            }) { VerificationSettingsView() }
+            }) {
+                if store.isDeveloperMode {
+                    NavigationStack { Form { Toggle("Scan sounds", isOn: $store.scanSounds) }
+                        .navigationTitle("Preview settings")
+                        .toolbar { Button("Done") { showSettings = false } } }
+                } else { VerificationSettingsView() }
+            }
             .sheet(item: $inspecting) { step in photoDetail(step) }
+            .onChange(of: store.modeSessionID) { _, _ in
+                reviewTask?.cancel(); timerTask?.cancel(); captureScanTask?.cancel(); scanTask?.cancel()
+                camera.stop(); draft.restart(); dismiss()
+            }
             .onChange(of: scenePhase) { _, phase in
                 if phase == .background {
                     cancelTimer()
@@ -288,8 +300,9 @@ struct RecyclingView: View {
                 .frame(maxWidth: .infinity).padding(.top, 16)
             Text(resultTitle).font(.title2.bold())
             if let result { Text("\(result.itemName) · \(result.material.rawValue.capitalized)").font(.headline) }
-            Label(alreadyRewarded ? "This action already earned leaves" : "\(earnedLeaves) leaves\(completedPreview ? " (preview)" : " earned")", systemImage: "leaf.fill")
+            Label(showRewardPreview ? "Preview reward · \(earnedLeaves) leaves" : (alreadyRewarded ? "This action already earned leaves" : (earnedLeaves > 0 ? "+\(earnedLeaves) leaves added to your total leaf points" : "No leaves added")), systemImage: "leaf.fill")
                 .font(.headline).padding(14).frame(maxWidth: .infinity, alignment: .leading).pixelPanel(Palette.sage)
+            Text("Total: \(store.state.points) leaves\(store.isDeveloperMode ? " (temporary)" : "")").font(.subheadline.bold())
             if let result {
                 Text(result.explanation).font(.subheadline)
                 VStack(alignment: .leading, spacing: 8) {
@@ -374,7 +387,7 @@ struct RecyclingView: View {
     private func celebrateCapture(_ step: RecyclingCaptureStep) {
         scanTask?.cancel()
         withAnimation(reduceMotion ? nil : .easeOut(duration: 0.15)) { scannedStep = step }
-        feedback.play(step, soundEnabled: scanSounds)
+        feedback.play(step, soundEnabled: store.scanSounds)
         UIAccessibility.post(notification: .announcement, argument: step.successMessage)
         if !reduceMotion { flashOpacity = 0.55 }
         scanTask = Task { @MainActor in
@@ -403,7 +416,7 @@ struct RecyclingView: View {
     }
 
     private func accept(_ image: UIImage, at date: Date) {
-        guard let step = draft.nextStep, !hasResult else { return }
+        guard modeSessionID == store.modeSessionID, let step = draft.nextStep, !hasResult else { return }
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         let scale = min(1, 1200 / max(image.size.width, image.size.height))
@@ -427,6 +440,7 @@ struct RecyclingView: View {
                     }
                 }
                 try Task.checkCancellation()
+                guard modeSessionID == store.modeSessionID else { return }
                 try draft.capture(jpeg: jpeg, at: date, allowRepeatedImages: autoAccept)
                 scanningStep = nil
                 scanningPhoto = nil
@@ -453,11 +467,11 @@ struct RecyclingView: View {
     private func submit() async {
         error = nil
         defer { checking = false }
-        guard !Task.isCancelled, draft.isComplete else { return }
+        guard let modeSessionID, store.isCurrentSession(modeSessionID), !Task.isCancelled, draft.isComplete else { return }
         if store.isDeveloperMode {
             let before = store.state.litter
             earnedLeaves = store.developer.actionReward
-            store.record(item: "Simulated recycling review")
+            store.record(item: "Simulated recycling review", sessionID: modeSessionID)
             clearedLitter = before - store.state.litter
             completedPreview = true
             draft.restart()
@@ -466,7 +480,7 @@ struct RecyclingView: View {
         do {
             if store.isDemoRecycling {
                 let before = store.state.litter
-                let applied = store.recordDemoAction(try draft.submission())
+                let applied = store.recordDemoAction(try draft.submission(), sessionID: modeSessionID)
                 earnedLeaves = applied ? RecyclingMode.demoLeaves : 0
                 alreadyRewarded = !applied
                 clearedLitter = before - store.state.litter
@@ -476,9 +490,10 @@ struct RecyclingView: View {
             }
             let review = try await VerificationConnection.current().assess(draft.submission())
             try Task.checkCancellation()
+            guard store.isCurrentSession(modeSessionID) else { return }
             let before = store.state.litter
             if review.status == .approved {
-                let applied = store.recordReviewedAction(review)
+                let applied = store.recordReviewedAction(review, sessionID: modeSessionID)
                 earnedLeaves = applied ? review.leaves : 0
                 alreadyRewarded = !applied
                 clearedLitter = before - store.state.litter

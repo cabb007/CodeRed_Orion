@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import { DatabaseSync } from 'node:sqlite';
 import { ClientError, decide, validateSubmission } from './policy.mjs';
 import { createGeminiVerifier } from './gemini.mjs';
+import { createBinRoutes } from './community-bins.mjs';
 
 export function createVerificationServer({ token, verify, databasePath = ':memory:', dailyReviewLimit = 30, now = () => Date.now() }) {
   if (!token || token.length < 24) throw new Error('ECOGOTCHI_ACCESS_TOKEN must have at least 24 characters.');
@@ -18,6 +19,7 @@ export function createVerificationServer({ token, verify, databasePath = ':memor
     CREATE INDEX IF NOT EXISTS submissions_daily ON submissions(client, created);
     CREATE TABLE IF NOT EXISTS review_attempts(id TEXT PRIMARY KEY, client TEXT, created INTEGER);
     CREATE INDEX IF NOT EXISTS review_attempts_created ON review_attempts(created);`);
+  const bins = createBinRoutes(db,now);
   const inFlight = new Set();
   const rate = new Map();
   let active = 0;
@@ -32,12 +34,15 @@ export function createVerificationServer({ token, verify, databasePath = ':memor
   const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { status: 'ok' });
     const connectionCheck = req.method === 'GET' && req.url === '/v1/status';
-    if (!connectionCheck && (req.method !== 'POST' || req.url !== '/v1/recycling/verify')) return send(res, 404, { error: 'Not found.' });
+    const binRequest = /^\/v1\/bins(?:[/?]|$)/.test(req.url);
+    if (!binRequest && !connectionCheck && (req.method !== 'POST' || req.url !== '/v1/recycling/verify')) return send(res, 404, { error: 'Not found.' });
     if (!authenticate(req.headers.authorization)) return send(res, 401, { error: 'Check the EcoGotchi server access token.' });
+    if (binRequest) return bins(req,res,send);
     if (connectionCheck) {
       const used = db.prepare('SELECT COUNT(*) AS count FROM review_attempts WHERE created>?').get(now() - 86_400_000).count;
-      return send(res, 200, { service: 'ecogotchi', status: 'ok', reviewsRemaining: Math.max(0, dailyReviewLimit - used) });
+      return send(res, 200, { service: 'ecogotchi', status: 'ok', reviewsRemaining: verify ? Math.max(0, dailyReviewLimit - used) : 0, communityBins: true, aiReview: !!verify });
     }
+    if (!verify) return send(res,503,{error:'AI review is not configured. Community bins are available.'});
     const client = req.headers['x-installation-id']?.toLowerCase();
     if (typeof client !== 'string' || !/^[a-f0-9-]{36}$/i.test(client)) return send(res, 400, { error: 'Missing installation ID.' });
     if (!(req.headers['content-type'] ?? '').startsWith('application/json')) return send(res, 415, { error: 'Use JSON.' });
@@ -115,15 +120,15 @@ export function createVerificationServer({ token, verify, databasePath = ':memor
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  if (!process.env.GEMINI_API_KEY) throw new Error('Set GEMINI_API_KEY in server/.env.');
+
   const server = createVerificationServer({
     token: process.env.ECOGOTCHI_ACCESS_TOKEN,
-    verify: createGeminiVerifier({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
-      maxOutputTokens: Number(process.env.GEMINI_MAX_OUTPUT_TOKENS ?? 2048) }),
+    verify: process.env.GEMINI_API_KEY ? createGeminiVerifier({ apiKey: process.env.GEMINI_API_KEY, model: process.env.GEMINI_MODEL || 'gemini-3.8-flash',
+      maxOutputTokens: Number(process.env.GEMINI_MAX_OUTPUT_TOKENS ?? 2048) }) : null,
     dailyReviewLimit: Number(process.env.DAILY_REVIEW_LIMIT ?? 30),
     databasePath: process.env.DATABASE_PATH || './data/verification.sqlite'
   });
   server.listen({ port: Number(process.env.PORT || 8787), host: process.env.HOST || '127.0.0.1', ipv6Only: false }, () => {
-    console.log(`EcoGotchi verification server ready on port ${process.env.PORT || 8787}. No photos are written to disk.`);
+    console.log(`EcoGotchi server ready on port ${process.env.PORT || 8787}. Community bin photos are stored in SQLite; AI review photos are transient.`);
   });
 }

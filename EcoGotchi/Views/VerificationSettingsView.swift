@@ -3,9 +3,9 @@ import SwiftUI
 struct VerificationSettingsView: View {
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("ecogotchi.scanSounds") private var scanSounds = true
-    @State private var address = VerificationConnection.savedURL
-    @State private var token = VerificationConnection.savedToken
+    @State private var modeID: UUID?
+    @State private var address = ""
+    @State private var token = ""
     @State private var error: String?
     @State private var connectionMessage: String?
     @State private var testing = false
@@ -22,7 +22,7 @@ struct VerificationSettingsView: View {
                          ? "Demo automatically accepts all three photos, adds 20 leaves, and clears one piece of habitat trash. No server or AI connection needed."
                          : "AI review sends the three photos to Gemini and awards leaves only after an approved review.")
                         .font(.subheadline)
-                    Toggle("Scan sounds", isOn: $scanSounds)
+                    Toggle("Scan sounds", isOn: $store.scanSounds)
                 } header: { Text("Scan experience") } footer: {
                     Text("Success sounds respect your iPhone’s Silent Mode. Demo progress is saved; developer preview progress remains temporary.")
                 }
@@ -53,6 +53,7 @@ struct VerificationSettingsView: View {
                                     let connection = try VerificationConnection(address: address, token: token)
                                     let result = try await connection.testConnection()
                                     try Task.checkCancellation()
+                                    guard modeID == store.modeSessionID, !store.isDeveloperMode else { return }
                                     try connection.save()
                                     connectionMessage = result.reviewsRemaining > 0
                                         ? "Connected and saved. Your server has \(result.reviewsRemaining) AI reviews left in its daily budget. Tap Done to continue."
@@ -85,6 +86,13 @@ struct VerificationSettingsView: View {
             .navigationTitle("Scan settings").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }.tint(Palette.forest)
+            .task {
+                guard !store.isDeveloperMode else { dismiss(); return }
+                modeID = store.modeSessionID
+                address = VerificationConnection.savedURL
+                token = VerificationConnection.savedToken
+            }
+            .onChange(of:store.modeSessionID) { _,_ in connectionTask?.cancel(); token = ""; dismiss() }
             .onChange(of: address) { _, _ in connectionMessage = nil; error = nil }
             .onChange(of: token) { _, _ in connectionMessage = nil; error = nil }
             .onDisappear { connectionTask?.cancel() }

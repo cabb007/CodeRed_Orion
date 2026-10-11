@@ -11,7 +11,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             HabitatScene(state: store.state, options: store.developer, sceneActive: panel == nil)
-                .id(store.state.habitat)
+                .id("\(store.state.habitat.rawValue)-\(store.modeSessionID)")
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {
@@ -139,8 +139,6 @@ struct ContentView: View {
                     VStack(spacing: 6) {
                         Image(systemName: "camera.fill").font(.system(size: 29, weight: .bold))
                         Text("RECYCLE").font(.system(size: 11, weight: .heavy)).tracking(1)
-                        Text(store.isDeveloperMode ? "+\(store.developer.actionReward) preview" : (store.isDemoRecycling ? "Demo · +20 leaves" : "AI photo review"))
-                            .font(.system(size: 9, weight: .medium)).opacity(0.8)
                     }.frame(width: 76, height: 68)
                 }.buttonStyle(PixelButtonStyle())
                     .accessibilityLabel("Recycle. Open camera")

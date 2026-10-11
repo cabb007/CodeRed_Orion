@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct InteractivePet: View {
+    @ObservedObject var world: AnimalWorld
     let animal: HabitatAnimal
     let home: CGPoint
     let playground: CGRect
@@ -26,14 +27,16 @@ struct InteractivePet: View {
     @State private var facingLeft = false
     @State private var tastedFood: GameSprite?
 
+    private var currentBody: PetBody? { world.body(for: animal.id) ?? bodyState }
     private var lifted: Bool { dragOrigin != nil }
     private var bounds: CGRect { PetMotion.bounds(in: playground, size: size, groundY: home.y) }
     private var center: CGPoint {
-        let origin = dragOrigin ?? bodyState?.position ?? CGPoint(x: home.x, y: bounds.maxY)
+        if lifted, let currentBody { return currentBody.position }
+        let origin = dragOrigin ?? currentBody?.position ?? CGPoint(x: home.x, y: bounds.maxY)
         return CGPoint(x: min(bounds.maxX, max(bounds.minX, origin.x + (lifted ? translation.width : 0))),
                        y: min(bounds.maxY, max(bounds.minY, origin.y + (lifted ? translation.height : 0))))
     }
-    private var walking: Bool { !lifted && walkTarget != nil && bodyState?.isGrounded == true && roamEnabled }
+    private var walking: Bool { !lifted && walkTarget != nil && currentBody?.isGrounded == true && roamEnabled }
     private var altitude: CGFloat { max(0, bounds.maxY - center.y) }
     private var motionSettings: PetAnimationSettings {
         .init(bounds: bounds, active: sceneActive && scenePhase == .active && !reduceMotion, roam: roamEnabled)
@@ -46,7 +49,7 @@ struct InteractivePet: View {
                     .frame(width: size * max(0.3, 0.65 - altitude / 600), height: size * 0.13)
                     .offset(y: altitude + size * 0.42).allowsHitTesting(false)
             }
-            PixelSprite(sprite: GameSprite(rawValue: animal.id) ?? .pip, size: size)
+            PixelSprite(sprite: GameSprite(rawValue: animal.id) ?? .pip, size: size, condition: reaction == nil ? store.state.condition : .thriving)
                 .scaleEffect(x: facingLeft ? -1 : 1, y: 1)
                 .rotationEffect(.degrees(reduceMotion ? 0 : tilt), anchor: .top)
                 .scaleEffect(reduceMotion ? 1 : (lifted ? 1.12 : (hop ? 1.10 : 1)))
@@ -89,7 +92,8 @@ struct InteractivePet: View {
             if !active && lifted { release(predictedTravel: .zero) }
         }
         .onChange(of: bounds) { _, _ in settleImmediately() }
-        .onDisappear { reactionTask?.cancel() }
+        .onAppear { returnHome() }
+        .onDisappear { reactionTask?.cancel(); world.remove(animal.id) }
     }
 
     private var drag: some Gesture {
@@ -105,7 +109,10 @@ struct InteractivePet: View {
                     UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.65)
                 }
                 let movement = value.translation.width - translation.width
-                translation = value.translation
+                let proposed = CGPoint(x: dragOrigin!.x + value.translation.width, y: dragOrigin!.y + value.translation.height)
+                let point = CGPoint(x:min(bounds.maxX,max(bounds.minX,proposed.x)), y:min(bounds.maxY,max(bounds.minY,proposed.y)))
+                let placed = world.move(animal.id, body:PetBody(position:point), bounds:bounds, size:size)
+                translation = CGSize(width:placed.position.x-dragOrigin!.x, height:placed.position.y-dragOrigin!.y)
                 withAnimation(reduceMotion ? nil : .spring(response: 0.25, dampingFraction: 0.45)) {
                     tilt = PetMotion.swing(horizontalMovement: movement)
                 }
@@ -121,12 +128,14 @@ struct InteractivePet: View {
         var falling = PetBody(position: center)
         falling.drop(from: center, predictedTravel: predictedTravel, in: bounds)
         if reduceMotion { falling.settle(in: bounds) }
-        bodyState = falling
+        bodyState = world.move(animal.id, body:falling, bounds:bounds, size:size)
         dragOrigin = nil
         translation = .zero
         withAnimation(reduceMotion ? nil : .spring(response: 0.4, dampingFraction: 0.55)) { tilt = 0 }
         nextWalkAt = Date().addingTimeInterval(1.5)
-        showAffection("Wheee!", shouldHop: false)
+        let sound = AnimalExpressions.dropSounds[animal.id] ?? "Wheee!"
+        showAffection(sound, shouldHop: false)
+        UIAccessibility.post(notification: .announcement, argument: "\(animal.name): \(sound)")
     }
 
     @MainActor
@@ -136,24 +145,24 @@ struct InteractivePet: View {
         if bodyState == nil {
             var initial = PetBody(position: home)
             initial.settle(in: bounds)
-            bodyState = initial
+            bodyState = world.move(animal.id, body:initial, bounds:bounds, size:size)
         }
         nextWalkAt = Date().addingTimeInterval(Double.random(in: 0.6...1.8))
         var lastTime = Date()
         while !Task.isCancelled {
-            do { try await Task.sleep(for: .milliseconds(walkTarget != nil || bodyState?.isGrounded == false ? 33 : 100)) }
+            do { try await Task.sleep(for: .milliseconds(walkTarget != nil || currentBody?.isGrounded == false ? 33 : 100)) }
             catch { return }
             guard !Task.isCancelled else { return }
             let now = Date()
             let seconds = max(0, min(0.1, now.timeIntervalSince(lastTime)))
             lastTime = now
-            guard !lifted, var moving = bodyState else { continue }
+            guard !lifted, var moving = currentBody else { continue }
             if !moving.isGrounded {
                 if moving.advance(seconds: seconds, in: bounds, gravity: animal.habitat == .ocean ? 220 : 1_450) {
                     UIImpactFeedbackGenerator(style: .soft).impactOccurred(intensity: 0.45)
                     nextWalkAt = now.addingTimeInterval(Double.random(in: 0.8...1.8))
                 }
-                bodyState = moving
+                bodyState = world.move(animal.id, body:moving, bounds:bounds, size:size)
             } else if roamEnabled && reaction == nil {
                 if let target = walkTarget {
                     facingLeft = target < moving.position.x
@@ -161,8 +170,11 @@ struct InteractivePet: View {
                     let arrived = moving.walk(toward: target, speed: animal.id == "maple" ? 27 : 21,
                                               seconds: seconds, in: bounds)
                     walkPhase += Double(abs(moving.position.x - previousX)) * 0.32
-                    bodyState = moving
-                    if arrived {
+                    let resolved = world.move(animal.id, body:moving, bounds:bounds, size:size)
+                    bodyState = resolved
+                    // Choose another walk after a neighbor blocks this destination.
+                    // Otherwise the pet can keep trying the same occupied spot forever.
+                    if arrived || abs(resolved.position.x - moving.position.x) > 0.1 {
                         walkTarget = nil
                         nextWalkAt = now.addingTimeInterval(Double.random(in: 1.2...3.0))
                     }
@@ -208,14 +220,14 @@ struct InteractivePet: View {
         settleImmediately()
         var initial = PetBody(position: home)
         initial.settle(in: bounds)
-        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) { bodyState = initial }
+        withAnimation(reduceMotion ? nil : .easeOut(duration: 0.3)) { bodyState = world.move(animal.id, body:initial, bounds:bounds, size:size) }
     }
 
     private func settleImmediately() {
         reactionTask?.cancel()
         var resting = PetBody(position: center)
         resting.settle(in: bounds)
-        bodyState = resting
+        bodyState = world.move(animal.id, body:resting, bounds:bounds, size:size)
         dragOrigin = nil
         translation = .zero
         tilt = 0

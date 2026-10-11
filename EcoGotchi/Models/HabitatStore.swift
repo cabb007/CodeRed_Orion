@@ -7,8 +7,14 @@ final class HabitatStore: ObservableObject {
     @Published var developer = DeveloperOptions()
     @Published private(set) var selectedFoodID: String?
     @Published var recyclingMode: RecyclingMode {
-        didSet { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") }
+        didSet { if !isDeveloperMode { defaults.set(recyclingMode.rawValue, forKey: "ecogotchi.recyclingMode") } }
     }
+    @Published var scanSounds = true {
+        didSet { if !isDeveloperMode { defaults.set(scanSounds, forKey: "ecogotchi.scanSounds") } }
+    }
+    @Published private(set) var modeSessionID = UUID()
+    private var savedPreferences: (RecyclingMode, Bool)?
+    func isCurrentSession(_ id: UUID) -> Bool { id == modeSessionID }
     private let key = "ecogotchi.habitat.v1"
     private let defaults: UserDefaults
 
@@ -24,6 +30,7 @@ final class HabitatStore: ObservableObject {
         recyclingMode = defaults.string(forKey: "ecogotchi.recyclingMode").flatMap(RecyclingMode.init(rawValue:)) ?? .demo
         let saved = defaults.data(forKey: key).flatMap { try? JSONDecoder().decode(HabitatState.self, from: $0) }
         session = HabitatSession(state: saved ?? HabitatState())
+        scanSounds = defaults.object(forKey: "ecogotchi.scanSounds") as? Bool ?? true
         refresh()
     }
 
@@ -35,8 +42,8 @@ final class HabitatStore: ObservableObject {
         save()
     }
 
-    func record(item: String) {
-        guard isDeveloperMode else { return }
+    func record(item: String, sessionID: UUID? = nil) {
+        guard isDeveloperMode, sessionID == nil || sessionID == modeSessionID else { return }
         session.state.recordAction(item: "[Preview] \(item)",
                                    reward: developer.actionReward,
                                    cleanup: developer.cleanupPerAction)
@@ -44,8 +51,8 @@ final class HabitatStore: ObservableObject {
     }
 
     @discardableResult
-    func recordDemoAction(_ submission: RecyclingSubmission) -> Bool {
-        guard !isDeveloperMode, isDemoRecycling,
+    func recordDemoAction(_ submission: RecyclingSubmission, sessionID: UUID? = nil) -> Bool {
+        guard sessionID == nil || sessionID == modeSessionID, !isDeveloperMode, isDemoRecycling,
               submission.photos.map(\.role) == ["bin", "item", "disposal"],
               submission.photos.allSatisfy({ $0.source == "camera" && !$0.data.isEmpty }),
               !state.actions.contains(where: { $0.submissionID == submission.submissionId }) else { return false }
@@ -58,8 +65,8 @@ final class HabitatStore: ObservableObject {
     }
 
     @discardableResult
-    func recordReviewedAction(_ assessment: RecyclingAssessment) -> Bool {
-        guard !isDeveloperMode, assessment.isValidReward,
+    func recordReviewedAction(_ assessment: RecyclingAssessment, sessionID: UUID? = nil) -> Bool {
+        guard sessionID == nil || sessionID == modeSessionID, !isDeveloperMode, assessment.isValidReward,
               !state.actions.contains(where: { $0.verificationID == assessment.receiptId || $0.submissionID == assessment.submissionId }) else { return false }
         session.state.recordAction(item: assessment.itemName, reward: assessment.leaves, cleanup: assessment.cleanup)
         let index = session.state.actions.count - 1
@@ -129,14 +136,24 @@ final class HabitatStore: ObservableObject {
     func beginDeveloperMode() {
         guard !isDeveloperMode else { return }
         refresh()
+        savedPreferences = (recyclingMode, scanSounds)
+        modeSessionID = UUID()
         session.beginPreview()
+        recyclingMode = .demo
         session.state.lastPollution = Date()
         developer = DeveloperOptions()
         selectedFoodID = nil
     }
 
     func endDeveloperMode() {
+        guard isDeveloperMode else { return }
+        modeSessionID = UUID()
         session.endPreview()
+        if let savedPreferences {
+            recyclingMode = savedPreferences.0
+            scanSounds = savedPreferences.1
+        }
+        savedPreferences = nil
         developer = DeveloperOptions()
         selectedFoodID = nil
         refresh()

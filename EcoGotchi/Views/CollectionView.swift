@@ -31,7 +31,7 @@ struct CollectionView: View {
     private func friendCard(_ animal: HabitatAnimal) -> some View {
         let unlocked = store.state.habitatActionCount >= animal.requiredActions
         return VStack(spacing: 8) {
-            PixelSprite(sprite: GameSprite(rawValue: animal.id) ?? .pip, size: 66)
+            PixelSprite(sprite: GameSprite(rawValue: animal.id) ?? .pip, size: 66, condition: store.state.condition)
                 .saturation(unlocked ? 1 : 0).opacity(unlocked ? 1 : 0.35)
             Text(animal.name).font(.headline)
             Label(unlocked ? "Collected" : "\(animal.requiredActions) actions", systemImage: unlocked ? "checkmark" : "lock.fill")
@@ -47,7 +47,7 @@ struct CollectionView: View {
 }
 
 enum ShopSection: String, CaseIterable, Identifiable {
-    case food = "Food", decorations = "Decorations", habitats = "Habitats"
+    case food = "Food", decorations = "Decorations", habitats = "Habitats", leaves = "Buy Leaves"
     var id: String { rawValue }
 }
 
@@ -75,6 +75,7 @@ struct ShopView: View {
                     if section == .food { foodShelf }
                     if section == .decorations { decorationShelf }
                     if section == .habitats { habitatShelf }
+                    if section == .leaves { LeafShopView() }
                 }.padding(.horizontal, 20).padding(.top, 4).padding(.bottom, 24)
             }
         }.onChange(of: section) { _, _ in notice = nil }

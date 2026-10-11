@@ -30,6 +30,11 @@ struct PetBody: Equatable {
     private(set) var velocity = CGVector.zero
     private(set) var isGrounded = true
 
+    mutating func shiftHorizontally(to x: CGFloat) {
+        position.x = x
+        velocity.dx = 0
+    }
+
     mutating func settle(in bounds: CGRect) {
         position = CGPoint(x: min(bounds.maxX, max(bounds.minX, position.x)), y: bounds.maxY)
         velocity = .zero
