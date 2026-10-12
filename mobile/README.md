@@ -189,6 +189,8 @@ See [SWIFT_PARITY.md](SWIFT_PARITY.md) for the implementation mapping and remain
 
 Open Find a bin → Add a bin landmark. Photograph the bin, use your location or enter coordinates, drag the pin to the bin, and confirm its position and public access. Choose materials from the bin label, add a name and notes, then Save landmark on this phone. Blue pins are personal drafts; they and their photos survive app restarts. Taking a photo does not upload it.
 
+Saving a landmark within the current search area keeps the displayed public and community locations. For a first landmark or one outside that area, the map searches around the new landmark so public recycling locations can appear beside it. If that search fails, the saved phone landmark remains available and **Refresh this area** can retry.
+
 To share, configure Community map connection with your Recycli server's HTTPS origin and RECYCLI_ACCESS_TOKEN. Select the phone draft and tap Share with community. This explicitly publishes the photo, precise bin location, name, materials and notes to other phones using that server. Purple pins are Community · unverified; green pins are existing listings. Photos load when you select a landmark. You can remove your own shared landmark or phone draft. Failed uploads keep the same saved draft for an idempotent retry. Bin sharing works without AI review or a Gemini key and never adds leaves.
 
 The app keeps shared phone copies for offline use, labeled as a phone cache when no current server result replaces them. Browser preview stores local drafts only. A standalone Android build still needs its Google Maps native configuration as described above. This feature currently uses prototype installation ownership rather than user accounts; see server/README.md.

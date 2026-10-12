@@ -58,7 +58,23 @@ export default function RecyclingFinder() {
   },[selected,local,store.preferences.url,store.token,store.installationId,configured]); // Selection owns the photo request.
   const open = url => Linking.openURL(url).catch(() => setError('Could not open that link. Check your maps app or browser.'));
   const saved = async record => {
-    cancel(); setBusy(false); setAdding(false); setLocal(await binRepository.list()); const next = areaFor(record.coordinate,radius); setArea(next); setResult({area:next,locations:[]}); setCommunity([]); setSelected(record.id); setNotice('Landmark saved on this phone. Select Share with community to publish it.');
+    const records = await binRepository.list();
+    if (!mounted.current) return;
+    cancel(); setBusy(false); setAdding(false); setLocal(records);
+    const showSaved = () => {
+      setSelected(record.id);
+      setNotice('Landmark saved on this phone. Select Share with community to publish it.');
+    };
+    // A nearby draft joins the existing map without discarding public or shared pins.
+    if (area && distance(area,record.coordinate) <= area.radius) {
+      showSaved();
+      return;
+    }
+    // For a first or distant landmark, load public listings around its location too.
+    await start(async (signal,epoch) => {
+      await search(record.coordinate,radius,signal,epoch);
+      if (mounted.current && !signal.aborted && epoch === generation.current) showSaved();
+    });
   };
   const share = async () => {
     if (shareLock.current) return; shareLock.current = true; setSharing(true); setError(''); upload.current = new AbortController();

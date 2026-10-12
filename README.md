@@ -31,6 +31,23 @@ These are separate implementations with separate local saves. Expo Go opens the 
 - Find existing public recycling locations, inspect materials, and open directions. Add photographed bin landmarks on your phone and explicitly share them with a community server, without replacing public listings.
 - Review past actions in the Journal and test gameplay in an isolated developer preview.
 
+### Included in both apps
+
+`prototype-2` keeps main's food, decoration and habitat shop and pet interactions, then adds the community-map and pet features. The additions do not replace the original features. Both the Swift app and the separate React Native app include:
+
+| Feature | Where to use it |
+| --- | --- |
+| Food shop and feeding | **Shop → Food**: buy a snack, choose **Use**, then tap a pet |
+| Decoration shop and saved layouts | **Shop → Decorations**: buy decorations, drag them in the habitat, and lock/unlock their positions |
+| Habitat selection | **Shop → Habitats**: visit Willow Grove, Coral Cove or Snow Glade for free |
+| Leaf packs | **Shop → Buy Leaves**: view 100, 500 and 1,200-leaf packs; purchasing is coming soon |
+| Existing public recycling locations | **Find a bin**: use your location or search a place; public listings remain available alongside landmarks |
+| Photographed recycling-can landmarks | **Find a bin → Add a bin landmark**: save on the phone, then optionally share with a community server |
+| Pet play and reactions | In the habitat: roam, pet, feed, drag and release; shared collisions, condition-dependent faces and species-inspired written drop reactions are included |
+| Reward confirmation | After a scan: see the actual leaves added and updated total; duplicate and zero-reward results do not claim another award |
+
+Community-bin hosting works without `GEMINI_API_KEY`; AI photo reviews still require a Gemini key. Swift and React Native setup, phone compatibility and automated checks are covered in [Run the app](#run-the-app), [Validation](#validation), the [mobile guide](mobile/README.md), and the [server guide](server/README.md).
+
 Each habitat accumulates one piece of litter every four hours, capped at six, including time away. Its condition changes from **Thriving** to **Littered**, **Tarnished**, and **Polluted**. A continuous progress bar shows the percentage cleaned. Habitat animations include leaves and fireflies, underwater bubbles and light, or falling snow; Reduce Motion is supported.
 
 [Preview the habitat animations](Art/habitat-animations-preview.gif).
