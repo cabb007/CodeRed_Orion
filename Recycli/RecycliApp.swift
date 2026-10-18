@@ -127,7 +127,7 @@ enum GameSprite: String, CaseIterable {
 
     static let images: [GameSprite: UIImage] = {
         let atlases = ["EcoSpritesPixel", "FriendsAndFood", "HabitatDecor"].reduce(into: [String: CGImage]()) { result, name in
-            result[name] = UIImage(named: name)?.cgImage
+            result[name] = GameArtwork.image(named: name)?.cgImage
         }
         return Dictionary(uniqueKeysWithValues: allCases.compactMap { sprite in
             let source = sprite.atlas
@@ -141,13 +141,44 @@ enum GameSprite: String, CaseIterable {
     }()
 }
 
+struct HabitatArtwork: View {
+    let asset: String
+
+    var body: some View {
+        if let image = GameArtwork.image(named: asset) {
+            Image(uiImage: image).resizable().interpolation(.none)
+        } else {
+            Palette.sage
+        }
+    }
+}
+
 struct PixelSprite: View {
+    private static let expressions: [GameSprite: [HabitatCondition: UIImage]] = {
+        var result: [GameSprite: [HabitatCondition: UIImage]] = [:]
+        for animal in HabitatAnimal.all {
+            guard let sprite = GameSprite(rawValue: animal.id) else { continue }
+            for condition in HabitatCondition.allCases {
+                guard let frame = AnimalExpressions.frame(animalID: animal.id, condition: condition),
+                      let atlas = GameArtwork.image(named: frame.asset)?.cgImage else { continue }
+                let b = frame.rect
+                let crop = CGRect(x:b.minX * CGFloat(atlas.width), y:b.minY * CGFloat(atlas.height),
+                    width:b.width * CGFloat(atlas.width), height:b.height * CGFloat(atlas.height)).integral
+                if let image = atlas.cropping(to: crop) {
+                    result[sprite, default: [:]][condition] = UIImage(cgImage: image)
+                }
+            }
+        }
+        return result
+    }()
+
     let sprite: GameSprite
     var size: CGFloat = 48
+    var condition: HabitatCondition?
 
     var body: some View {
         Group {
-            if let image = GameSprite.images[sprite] {
+            if let image = condition.flatMap({ Self.expressions[sprite]?[$0] }) ?? GameSprite.images[sprite] {
                 Image(uiImage: image).resizable().interpolation(.none).scaledToFit()
             } else {
                 Image(systemName: "leaf.fill").resizable().scaledToFit()

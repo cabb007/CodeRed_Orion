@@ -152,11 +152,11 @@ test('connection check verifies authentication without calling Gemini or spendin
   const api = await start(t, { dailyReviewLimit: 1, now: () => baseTime, verify: async () => { calls++; return good; } });
   assert.equal((await api.checkConnection({ Authorization: 'Bearer wrong' })).status, 401);
   for (let i = 0; i < 3; i++) {
-    assert.deepEqual(await api.checkConnection(), { status: 200, body: { service: 'recycli', status: 'ok', reviewsRemaining: 1 } });
+    assert.deepEqual(await api.checkConnection(), { status: 200, body: { service: 'recycli', status: 'ok', reviewsRemaining: 1, communityBins:true, aiReview:true } });
   }
   assert.equal(calls, 0);
   assert.equal((await api.post(submission())).status, 200);
-  assert.deepEqual((await api.checkConnection()).body, { service: 'recycli', status: 'ok', reviewsRemaining: 0 });
+  assert.deepEqual((await api.checkConnection()).body, { service: 'recycli', status: 'ok', reviewsRemaining: 0, communityBins:true, aiReview:true });
   assert.equal(calls, 1);
 });
 test('HTTP auth rejects before calling Gemini', async t => {

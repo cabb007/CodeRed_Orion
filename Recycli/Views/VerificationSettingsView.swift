@@ -3,7 +3,6 @@ import SwiftUI
 struct VerificationSettingsView: View {
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("ecogotchi.scanSounds") private var scanSounds = true
     @AppStorage(RecyclingReviewProvider.preferenceKey) private var provider = RecyclingReviewProvider.direct
     @State private var apiKey = GeminiDirectConnection.savedKey
     @State private var model = GeminiDirectConnection.savedModel
@@ -25,9 +24,12 @@ struct VerificationSettingsView: View {
                          ? "Demo accepts the two photos automatically and adds 20 leaves. No internet needed."
                          : "Actual reviews your two photos with Gemini. Only approved reviews earn leaves.")
                         .font(.subheadline)
-                    Toggle("Scan sounds", isOn: $scanSounds)
+                    Toggle("Scan sounds", isOn: $store.scanSounds)
                 } header: { Text("Scan experience") } footer: {
                     Text("Sounds respect Silent Mode. Rewards in developer preview stay temporary, including Actual reviews.")
+                    if store.isDeveloperMode {
+                        Text("Scan mode and sound changes restore on exit. Connections you explicitly save below remain available outside preview.")
+                    }
                 }
                 if !store.isDemoRecycling {
                     Section {
@@ -144,7 +146,9 @@ struct VerificationSettingsView: View {
                     let result = try await connection.testConnection()
                     try Task.checkCancellation()
                     try connection.save()
-                    connectionMessage = result.reviewsRemaining > 0
+                    connectionMessage = result.aiReview == false
+                        ? "Connected for community bins. Configure GEMINI_API_KEY on the server to enable AI review."
+                        : result.reviewsRemaining > 0
                         ? "Connected and saved. Your server has \(result.reviewsRemaining) AI reviews left today."
                         : "Connected and saved, but the server’s daily review budget is used up. Try later."
                 }

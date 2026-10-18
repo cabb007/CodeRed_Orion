@@ -1,0 +1,31 @@
+name: Swift checks
+on:
+  push:
+    branches: [prototype-2, final]
+    paths: ['Recycli/**', 'Recycli.xcodeproj/**', 'Tests/**', 'Package.swift', 'xtool.yml', 'scripts/**', '.github/workflows/swift-checks.yml']
+  pull_request:
+    paths: ['Recycli/**', 'Recycli.xcodeproj/**', 'Tests/**', 'Package.swift', 'xtool.yml', 'scripts/**', '.github/workflows/swift-checks.yml']
+jobs:
+  swift:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check gameplay, persistence, capture, maps and Dev Mode
+        run: bash scripts/check-swift.sh
+      - name: Build the iOS app for Simulator
+        run: xcodebuild -project Recycli.xcodeproj -scheme Recycli -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
+      - name: Check xtool resources and permission packaging
+        run: |
+          python3 -m unittest discover -s Tests -p 'xtool_*_test.py' -v
+          python3 scripts/prepare_xtool.py
+      - name: Build xtool Swift package sources for iOS Simulator
+        run: |
+          simulator_sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
+          swift build --triple arm64-apple-ios17.0-simulator --sdk "$simulator_sdk"
+  artwork:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load every xtool habitat background in UIKit on Simulator
+        run: bash scripts/check-artwork.sh

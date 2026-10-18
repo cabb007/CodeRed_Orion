@@ -1,0 +1,28 @@
+version: 1
+bundleID: org.ecogotchi.app
+product: Recycli
+infoPath: .xtool-resources/Info.plist
+iconPath: .xtool-resources/AppIcon.png
+resources:
+  - .xtool-resources/EcoSpritesPixel.png
+  - .xtool-resources/FriendsAndFood.png
+  - .xtool-resources/GroveExpressions.png
+  - .xtool-resources/GrovePolluted.png
+  - .xtool-resources/GroveTarnished.png
+  - .xtool-resources/GroveThriving.png
+  - .xtool-resources/HabitatDecor.png
+  - .xtool-resources/OceanExpressions.png
+  - .xtool-resources/OceanLittered.png
+  - .xtool-resources/OceanPolluted.png
+  - .xtool-resources/OceanReef.png
+  - .xtool-resources/OceanTarnished.png
+  - .xtool-resources/SnowExpressions.png
+  - .xtool-resources/SnowGlade.png
+  - .xtool-resources/SnowLittered.png
+  - .xtool-resources/SnowPolluted.png
+  - .xtool-resources/SnowTarnished.png
+  - .xtool-resources/WillowGrovePixel.png
+  - .xtool-resources/scan-bin.wav
+  - .xtool-resources/scan-disposal.wav
+  - .xtool-resources/scan-item.wav
+  - .xtool-resources/GeminiReview.json

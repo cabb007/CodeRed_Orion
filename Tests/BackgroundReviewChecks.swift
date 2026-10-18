@@ -87,6 +87,7 @@ struct BackgroundReviewChecks {
         liveGate.finish(receipt(liveScan))
         try await waitUntil { store.scanReview?.status == .finished }
         precondition(store.state.points == 999 && HabitatStore(defaults: defaults).state.points == 60)
+        precondition(store.savedLeafTotal == 60, "A real review shows the saved total while preview is visible")
         store.endDeveloperMode()
         precondition(store.state.points == 60)
         store.dismissScanReview()

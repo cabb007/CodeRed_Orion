@@ -36,7 +36,7 @@ struct DeveloperPanel: View {
                          : "Actual sends your two photos for AI review when you tap Send for review. Reviews use your Gemini quota; rewards here only change the preview.")
                         .font(.caption).foregroundStyle(.secondary)
                     Button("Set up Actual scans") { store.recyclingMode = .ai; showScanSettings = true }
-                    Text("This mode also applies after you exit preview.")
+                    Text("Scan mode changes here are temporary. Exit preview and select Actual in Recycle settings to earn saved-game rewards.")
                         .font(.caption).foregroundStyle(.secondary)
                 }
 

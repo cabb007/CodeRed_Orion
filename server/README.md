@@ -1,12 +1,12 @@
 # Recycli recycling review
 
-The app now starts in offline **Demo** mode and does not need this server. For Gemini without a Mac, select **Actual → On iPhone** in Recycle → gear and enter your personal key. To use this server instead, select **Actual → Review server**. Demo awards are labeled separately and never call this server.
+Both apps start in offline **Demo** mode and does not need this server. In Swift, for Gemini without a server, select **Actual → On iPhone** in Recycle → gear and enter your personal key. To use this server instead, select **Actual → Review server**. Demo awards are labeled separately and never call this server.
 
-The iPhone sends two camera photos to this small server: the bin (include sorting icons, labels, or nearby signs if available), and the item. A written bin label is optional. Gemini identifies the material and returns a structured visual assessment and sorting tip. The server awards leaves only when the assessment satisfies all reward rules. An unavailable or unconfigured server never grants a fallback reward.
+The Swift iPhone app or React Native iOS/Android app sends two camera photos to this small server: the bin (include sorting icons, labels, or nearby signs if available), and the item. A written bin label is optional. Gemini identifies the material and returns a structured visual assessment and sorting tip. The server awards leaves only when the assessment satisfies all reward rules. An unavailable or unconfigured server never grants a fallback reward.
 
 ## Set up on your Mac
 
-You need Node.js 22.13 or newer and a [Gemini API key from Google AI Studio](https://aistudio.google.com/api-keys). The server has no packages to install.
+You need Node.js 22.13 or newer. A [Gemini API key from Google AI Studio](https://aistudio.google.com/api-keys) is required for AI review, but optional for community bins. The server has no packages to install.
 
 1. Open a terminal in this project's `server` folder and create the local configuration:
 
@@ -14,7 +14,7 @@ You need Node.js 22.13 or newer and a [Gemini API key from Google AI Studio](htt
    cp .env.example .env
    ```
 
-2. Open `.env` privately. Put your Gemini key after `GEMINI_API_KEY=`. Keep it out of the iPhone app and chat. `.env` is excluded from Git.
+2. Open `.env` privately. Put your Gemini key after `GEMINI_API_KEY=`. In server mode, enter the separate access token in the app; keep this server key private. Leave `GEMINI_API_KEY` empty for community-only operation. `.env` is excluded from Git.
 
 3. Generate a separate server access token:
 
@@ -81,11 +81,11 @@ Reward values live in `policy.mjs` and the app’s `RecycledMaterial.leaves`; up
 
 The same submission ID and photos return the same saved receipt, even after a network failure or the capture window expires. The iPhone stores awarded receipt and submission IDs with the journal so retrying cannot award twice, including after relaunch. Identical photos that already earned leaves cannot earn again under another submission. Fingerprints and results persist in SQLite across server restarts; keep `server/data` intact. The server permits two simultaneous Gemini requests, six submissions per minute per network address, and ten approved rewards per installation in a rolling 24 hours.
 
-A camera interruption or backgrounding before both captures discards the incomplete sequence. After submission, the app owns the review independently of the camera screen. You can return to the habitat, play, and open its review banner to see status/results. Approved rewards apply to the original habitat, once. Failed or cancelled reviews retain their two photos in memory for a manual retry; discarding the failed scan releases them. Photos are released on completion. Developer reviews remain isolated and are discarded on preview reset/exit; a live review completing during preview updates only the saved game. Keep the app open: iOS may suspend review when backgrounded, and terminating the app discards pending scans. There is no account-based receipt recovery.
+A camera interruption or backgrounding before both captures discards the incomplete sequence. In Swift, after submission, the app owns the review independently of the camera screen. You can return to the habitat, play, and open its review banner to see status/results. Approved rewards apply to the original habitat, once. Failed or cancelled reviews retain their two photos in memory for a manual retry; discarding the failed scan releases them. Photos are released on completion. Developer reviews remain isolated and are discarded on preview reset/exit; a live review completing during preview updates only the saved game. Keep the app open: iOS may suspend review when backgrounded, and terminating the app discards pending scans. There is no account-based receipt recovery. React Native currently keeps the review on its scan screen; keep that screen open through review and saving. Closing it discards the pending scan. Both apps reject duplicate reward receipts.
 
 ## Privacy and prototype limits
 
-Only two selected photos are resized and re-encoded in the app, then sent when the user taps **Send for review**. The continuous camera preview is neither recorded to disk nor streamed to the server. The app does not add them to the photo library. This server holds photos in memory during processing and does not write or log them. SQLite stores image hashes, review text, timestamps, random installation/submission IDs, and receipts. Gemini requests use `store: false` to disable Interactions history; this is not a promise of zero retention or training by Google. [Google’s API data terms](https://ai.google.dev/gemini-api/terms) still apply. Developer preview follows the app’s Demo/Actual selection. Actual sends real reviews and uses quota while keeping rewards temporary. Guided sample artwork and reward previews never upload photos.
+Only two selected photos are resized and re-encoded in the app, then sent when the user taps **Send for review**. The continuous camera preview is neither recorded to disk nor streamed to the server. The app does not add them to the photo library. For AI review, this server holds photos in memory during processing and does not write or log them. Explicitly shared community-bin photos are persisted as described below. SQLite stores image hashes, review text, timestamps, random installation/submission IDs, and receipts. Gemini requests use `store: false` to disable Interactions history; this is not a promise of zero retention or training by Google. [Google’s API data terms](https://ai.google.dev/gemini-api/terms) still apply. Swift developer preview follows its Demo/Actual selection; React Native preview always simulates and never uploads. Actual sends real reviews and uses quota while keeping rewards temporary. Guided sample artwork and reward previews never upload photos.
 
 AI checks item/bin compatibility; this flow does not capture or verify disposal or downstream recycling. Image hashes catch exact reuse, not altered photos or repeated staging. Capture timestamps and installation IDs are client-supplied. The shared token and local game balance are suitable for a private hackathon prototype, not a public reward service or real-money redemption. Public deployment would need authenticated accounts, an authoritative reward ledger, stronger capture/replay checks, and operational limits. Paid cosmetics, real donations, and cash-value rewards remain unimplemented.
 
@@ -104,3 +104,34 @@ The server must listen with `HOST=::`; `HOST=0.0.0.0` only listens for IPv4. The
 The app keeps HTTPS for public hosts and permits HTTP only for local names, private/link-local IPv4 ranges, and the explicitly configured development IPv6 host. The scoped IP exceptions follow [Apple’s ATS configuration](https://developer.apple.com/documentation/bundleresources/information-property-list/nsapptransportsecurity/nsexceptiondomains). Device isolation and Local Network permission can still prevent a connection; the direct address only bypasses name lookup.
 
 Recycli uses `RECYCLI_ACCESS_TOKEN` for new server setups. Existing `.env` files using `ECOGOTCHI_ACCESS_TOKEN` continue to work.
+
+## Community bin landmarks (both apps)
+
+Start this same server with RECYCLI_ACCESS_TOKEN configured. GEMINI_API_KEY is optional for community maps; without it, AI review returns 503 and the connection status reports aiReview=false. Restart after updating the source. Existing SQLite tables and receipts are preserved; a community_bins table is added.
+
+On Windows, from the repository root:
+
+```powershell
+cd server
+# Only if .env does not already exist:
+Copy-Item .env.example .env
+# Set RECYCLI_ACCESS_TOKEN privately in .env (at least 24 characters).
+npm.cmd start
+```
+
+For React Native AI review, configure the same HTTPS origin and access token in Recycle → Settings → AI review. Both apps submit bin and item photos; disposal proof is not captured.
+
+Host this behind HTTPS or an HTTPS development tunnel. React Native uses an HTTPS origin with no path; localhost on a phone refers to the phone. In Find a bin → Community map connection, enter the origin and shared access token. Phones connected to this server see the same landmarks. Browser preview supports local drafts only.
+
+Authenticated endpoints (X-Installation-ID required):
+
+- GET /v1/bins?latitude=…&longitude=…&radius=5000 (also 10000 or 25000), returning up to 200 nearest pins with a truncated flag. No image bytes or installation IDs appear in the list.
+- POST /v1/bins with a stable UUID, name, coordinates, materials, notes, publicAccess=true, and a camera JPEG. Duplicate IDs retry idempotently; changed payloads conflict. Identical photos within 20 metres reuse the existing landmark.
+- GET /v1/bins/{id}/photo returns the sanitized JPEG separately.
+- DELETE /v1/bins/{id} removes a pin and photo only for its submitting installation. Removed IDs cannot be resurrected by retries.
+
+Photos are limited to 375 KB decoded and 1600 pixels per edge. The app resizes and re-encodes to JPEG; the server also strips EXIF, application metadata and comments. Bin photos, exact coordinates rounded to five decimals, names, notes and material lists are stored in SQLite and shared with users who possess this server token. Photos do not go to Gemini. Sharing never awards leaves. Limits: 20 new landmarks per installation and 100 per server per rolling 24 hours, independent of the AI quota. Phone drafts are capped at 50. Keep the SQLite database if you want landmarks to survive restarts.
+
+All community pins are unverified. This is a private prototype using a shared token and client-supplied installation IDs, not account authentication: a person who learns an installation ID and holds the token could impersonate that installation. A public launch needs real account ownership, moderation/reporting and operational storage limits. Metadata stripping does not remove people or identifying details visible in the image. Cached phone copies may show an outdated shared pin during an outage; removing a shared pin does not erase copies already saved on another phone.
+
+Community tests use a synthetic 2×2 JPEG and local HTTP requests, including photo sanitation, auth, retry conflicts, geo searches, removal, quotas and restart persistence. No user photos are uploaded during tests.

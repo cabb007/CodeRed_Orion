@@ -11,7 +11,7 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             HabitatScene(state: store.state, options: store.developer, sceneActive: panel == nil)
-                .id(store.state.habitat)
+                .id("\(store.state.habitat.rawValue)-\(store.modeSessionID)")
                 .ignoresSafeArea()
 
             VStack(spacing: 16) {

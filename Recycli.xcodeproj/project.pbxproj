@@ -35,6 +35,13 @@
 		955B187CE8A831B8B2C71F34 /* Recycli/Views/CollectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4440A7E10CDF876F77ACC982 /* Recycli/Views/CollectionView.swift */; };
 		9F8D959D2110B8420555352F /* Recycli/Views/RecyclingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6BD7581AC2BF7074E0F55D4 /* Recycli/Views/RecyclingView.swift */; };
 		CB84B5B0ED7CDBE64842A3AF /* Recycli/Views/HabitatScene.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8629733398EA6EB53A42BC4B /* Recycli/Views/HabitatScene.swift */; };
+		A1DEA96AFB03978D3BD68460 /* Recycli/Models/AnimalExpressions.swift in Sources */ = {isa = PBXBuildFile; fileRef = D0A04BA1B19C89E4C604FA48; };
+		27BDD310DA85CA2EF8A83041 /* Recycli/Models/AnimalWorld.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3698010291428D650116712; };
+		5D63554342E0266B10292D2A /* Recycli/Models/CommunityBins.swift in Sources */ = {isa = PBXBuildFile; fileRef = 84DE76B4B7F2CAF4223DC010; };
+		27B6A41FD0490F9FB14D97CB /* Recycli/Views/LeafShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DC07428D42E6ECEBDEBB08; };
+		9D8DC67814D5E5625172330B /* Recycli/Views/NewBinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AAE05A9C64459F16A53F42; };
+		D7D4926C58CB00EB1A1F1F73 /* Recycli/Views/CommunityLandmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360100FFF0B9179472C583C3; };
+		0013E1B9ABEDA917541D0ABA /* Recycli/Models/GameArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F78350DFEAB450171E0961; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -68,6 +75,13 @@
 		8629733398EA6EB53A42BC4B /* Recycli/Views/HabitatScene.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recycli/Views/HabitatScene.swift; sourceTree = SOURCE_ROOT; };
 		A51E30EBEB8499B83AF6318A /* Recycli/Models/HabitatStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recycli/Models/HabitatStore.swift; sourceTree = SOURCE_ROOT; };
 		B6BD7581AC2BF7074E0F55D4 /* Recycli/Views/RecyclingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Recycli/Views/RecyclingView.swift; sourceTree = SOURCE_ROOT; };
+		D0A04BA1B19C89E4C604FA48 /* Recycli/Models/AnimalExpressions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Models/AnimalExpressions.swift"; sourceTree = SOURCE_ROOT; };
+		E3698010291428D650116712 /* Recycli/Models/AnimalWorld.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Models/AnimalWorld.swift"; sourceTree = SOURCE_ROOT; };
+		84DE76B4B7F2CAF4223DC010 /* Recycli/Models/CommunityBins.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Models/CommunityBins.swift"; sourceTree = SOURCE_ROOT; };
+		55DC07428D42E6ECEBDEBB08 /* Recycli/Views/LeafShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/LeafShopView.swift"; sourceTree = SOURCE_ROOT; };
+		44AAE05A9C64459F16A53F42 /* Recycli/Views/NewBinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/NewBinView.swift"; sourceTree = SOURCE_ROOT; };
+		360100FFF0B9179472C583C3 /* Recycli/Views/CommunityLandmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/CommunityLandmarksView.swift"; sourceTree = SOURCE_ROOT; };
+		15F78350DFEAB450171E0961 /* Recycli/Models/GameArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Models/GameArtwork.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +98,13 @@
 		325F10A6957A34D66CB8C0E4 = {
 			isa = PBXGroup;
 			children = (
+				15F78350DFEAB450171E0961 /* Recycli/Models/GameArtwork.swift */,
+				360100FFF0B9179472C583C3 /* Recycli/Views/CommunityLandmarksView.swift */,
+				44AAE05A9C64459F16A53F42 /* Recycli/Views/NewBinView.swift */,
+				55DC07428D42E6ECEBDEBB08 /* Recycli/Views/LeafShopView.swift */,
+				84DE76B4B7F2CAF4223DC010 /* Recycli/Models/CommunityBins.swift */,
+				E3698010291428D650116712 /* Recycli/Models/AnimalWorld.swift */,
+				D0A04BA1B19C89E4C604FA48 /* Recycli/Models/AnimalExpressions.swift */,
 				AE44B144C9D3C91C3E41BE57 /* Recycli/Resources/GeminiReview.json */,
 				9013671206CB648D8B2B0C2E /* Recycli/Models/GeminiDirectConnection.swift */,
 				8701360FE4FDC6514A2897F4 /* Recycli/Models/GeminiReview.swift */,
@@ -192,6 +213,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0013E1B9ABEDA917541D0ABA /* Recycli/Models/GameArtwork.swift in Sources */,
+				D7D4926C58CB00EB1A1F1F73 /* Recycli/Views/CommunityLandmarksView.swift in Sources */,
+				9D8DC67814D5E5625172330B /* Recycli/Views/NewBinView.swift in Sources */,
+				27B6A41FD0490F9FB14D97CB /* Recycli/Views/LeafShopView.swift in Sources */,
+				5D63554342E0266B10292D2A /* Recycli/Models/CommunityBins.swift in Sources */,
+				27BDD310DA85CA2EF8A83041 /* Recycli/Models/AnimalWorld.swift in Sources */,
+				A1DEA96AFB03978D3BD68460 /* Recycli/Models/AnimalExpressions.swift in Sources */,
 				560D4DCB053F58EACC88C992 /* Recycli/Models/GeminiDirectConnection.swift in Sources */,
 				2904958F80DAA07C9407AE99 /* Recycli/Models/GeminiReview.swift in Sources */,
 				4C1161432AD6C26B723D84BC /* Recycli/Views/HabitatAtmosphere.swift in Sources */,

@@ -6,6 +6,7 @@ struct HabitatScene: View {
     var sceneActive = true
     @EnvironmentObject private var store: HabitatStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @StateObject private var animalWorld = AnimalWorld()
     @State private var selectedDecoration: String?
 
     var body: some View {
@@ -33,7 +34,7 @@ struct HabitatScene: View {
 
     private func world(width: CGFloat, height: CGFloat, playground: CGRect) -> some View {
         ZStack {
-            Image(state.habitat.asset(for: state.condition)).resizable().interpolation(.none)
+            HabitatArtwork(asset: state.habitat.asset(for: state.condition))
                 .frame(width: width, height: height)
                 .saturation(backgroundSaturation)
                 .id(state.habitat.asset(for: state.condition))
@@ -59,12 +60,12 @@ struct HabitatScene: View {
                 }
             }
 
-            ForEach(Array(state.habitat.animals.enumerated()), id: \.element.id) { index, animal in
+            ForEach(Array(visibleAnimals.enumerated()), id: \.element.id) { index, animal in
                 if isVisible(animal) {
-                    InteractivePet(animal: animal,
+                    InteractivePet(world: animalWorld, animal: animal,
                                    home: CGPoint(x: width * [0.34, 0.65, 0.60, 0.27][index],
                                                  y: height * (state.habitat == .ocean ? [0.52, 0.60, 0.67, 0.56][index] : [0.68, 0.65, 0.73, 0.70][index])),
-                                   playground: playground, size: width * 0.15 * options.spriteScale,
+                                   playground: playground, size: min(width * 0.15 * options.spriteScale, max(1, (playground.width - 16) / CGFloat(max(1, visibleAnimals.count)) / 1.8)),
                                    roamEnabled: options.animateAnimals, sceneActive: sceneActive,
                                    showLabel: options.showLabels)
                         .transition(.opacity)
@@ -96,6 +97,10 @@ struct HabitatScene: View {
         }.coordinateSpace(name: "habitatWorld")
             .onChange(of: sceneActive) { _, active in if !active { selectedDecoration = nil } }
             .onChange(of: store.isDeveloperMode) { _, _ in selectedDecoration = nil }
+    }
+
+    private var visibleAnimals: [HabitatAnimal] {
+        Array(state.habitat.animals.filter { isVisible($0) }.prefix(AnimalWorld.capacity))
     }
 
     private func isVisible(_ animal: HabitatAnimal) -> Bool {
