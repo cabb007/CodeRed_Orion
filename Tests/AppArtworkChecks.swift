@@ -1,12 +1,24 @@
 import Foundation
 import UIKit
+import SwiftUI
 
 @main
-struct AppArtworkChecks {
-    static func main() {
-        precondition(CommandLine.arguments.count == 3)
-        guard let bundle = Bundle(path: CommandLine.arguments[1]),
-              let emptyBundle = Bundle(path: CommandLine.arguments[2]) else {
+struct AppArtworkChecks: App {
+    var body: some Scene {
+        WindowGroup {
+            Text("Checking habitat artwork…").onAppear {
+                DispatchQueue.main.async {
+                    Self.checkArtwork()
+                    exit(0)
+                }
+            }
+        }
+    }
+
+    static func checkArtwork() {
+        let bundle = Bundle.main
+        guard let emptyURL = bundle.url(forResource: "EmptyFixture", withExtension: "bundle"),
+              let emptyBundle = Bundle(url: emptyURL) else {
             preconditionFailure("Artwork fixture bundles could not be opened")
         }
         var checked = Set<String>()
@@ -35,5 +47,6 @@ struct AppArtworkChecks {
         precondition(GameArtwork.image(named: "GroveThriving", in: emptyBundle) == nil,
                      "Artwork cached for one bundle must not mask another bundle's missing file")
         print("Artwork runtime checks passed: all 12 habitat/condition combinations, \(checked.count) backgrounds, thumbnails, six sprite atlases and bundle-scoped caching.")
+        fflush(stdout)
     }
 }

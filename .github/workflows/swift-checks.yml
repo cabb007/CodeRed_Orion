@@ -22,5 +22,10 @@ jobs:
         run: |
           simulator_sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
           swift build --triple arm64-apple-ios17.0-simulator --sdk "$simulator_sdk"
+  artwork:
+    runs-on: macos-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
       - name: Load every xtool habitat background in UIKit on Simulator
         run: bash scripts/check-artwork.sh
