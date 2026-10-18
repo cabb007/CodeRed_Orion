@@ -34,7 +34,7 @@ struct HabitatScene: View {
 
     private func world(width: CGFloat, height: CGFloat, playground: CGRect) -> some View {
         ZStack {
-            Image(state.habitat.asset(for: state.condition)).resizable().interpolation(.none)
+            HabitatArtwork(asset: state.habitat.asset(for: state.condition))
                 .frame(width: width, height: height)
                 .saturation(backgroundSaturation)
                 .id(state.habitat.asset(for: state.condition))

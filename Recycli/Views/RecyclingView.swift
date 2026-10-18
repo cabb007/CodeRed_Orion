@@ -452,7 +452,7 @@ struct RecyclingView: View {
 
     private func sampleImage(for step: RecyclingCaptureStep) -> UIImage? {
         switch step {
-        case .bin: UIImage(named: "GroveThriving")
+        case .bin: GameArtwork.image(named: "GroveThriving")
         case .item: GameSprite.images[.can]
         }
     }

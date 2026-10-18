@@ -41,6 +41,7 @@
 		27B6A41FD0490F9FB14D97CB /* Recycli/Views/LeafShopView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 55DC07428D42E6ECEBDEBB08; };
 		9D8DC67814D5E5625172330B /* Recycli/Views/NewBinView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 44AAE05A9C64459F16A53F42; };
 		D7D4926C58CB00EB1A1F1F73 /* Recycli/Views/CommunityLandmarksView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 360100FFF0B9179472C583C3; };
+		0013E1B9ABEDA917541D0ABA /* Recycli/Models/GameArtwork.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15F78350DFEAB450171E0961; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +81,7 @@
 		55DC07428D42E6ECEBDEBB08 /* Recycli/Views/LeafShopView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/LeafShopView.swift"; sourceTree = SOURCE_ROOT; };
 		44AAE05A9C64459F16A53F42 /* Recycli/Views/NewBinView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/NewBinView.swift"; sourceTree = SOURCE_ROOT; };
 		360100FFF0B9179472C583C3 /* Recycli/Views/CommunityLandmarksView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Views/CommunityLandmarksView.swift"; sourceTree = SOURCE_ROOT; };
+		15F78350DFEAB450171E0961 /* Recycli/Models/GameArtwork.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Recycli/Models/GameArtwork.swift"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -96,6 +98,7 @@
 		325F10A6957A34D66CB8C0E4 = {
 			isa = PBXGroup;
 			children = (
+				15F78350DFEAB450171E0961 /* Recycli/Models/GameArtwork.swift */,
 				360100FFF0B9179472C583C3 /* Recycli/Views/CommunityLandmarksView.swift */,
 				44AAE05A9C64459F16A53F42 /* Recycli/Views/NewBinView.swift */,
 				55DC07428D42E6ECEBDEBB08 /* Recycli/Views/LeafShopView.swift */,
@@ -210,6 +213,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0013E1B9ABEDA917541D0ABA /* Recycli/Models/GameArtwork.swift in Sources */,
 				D7D4926C58CB00EB1A1F1F73 /* Recycli/Views/CommunityLandmarksView.swift in Sources */,
 				9D8DC67814D5E5625172330B /* Recycli/Views/NewBinView.swift in Sources */,
 				27B6A41FD0490F9FB14D97CB /* Recycli/Views/LeafShopView.swift in Sources */,

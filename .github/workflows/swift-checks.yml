@@ -1,7 +1,7 @@
 name: Swift checks
 on:
   push:
-    branches: [prototype-2]
+    branches: [prototype-2, final]
     paths: ['Recycli/**', 'Recycli.xcodeproj/**', 'Tests/**', 'Package.swift', 'xtool.yml', 'scripts/**', '.github/workflows/swift-checks.yml']
   pull_request:
     paths: ['Recycli/**', 'Recycli.xcodeproj/**', 'Tests/**', 'Package.swift', 'xtool.yml', 'scripts/**', '.github/workflows/swift-checks.yml']
@@ -22,3 +22,5 @@ jobs:
         run: |
           simulator_sdk="$(xcrun --sdk iphonesimulator --show-sdk-path)"
           swift build --triple arm64-apple-ios17.0-simulator --sdk "$simulator_sdk"
+      - name: Load every xtool habitat background in UIKit on Simulator
+        run: bash scripts/check-artwork.sh

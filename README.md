@@ -284,6 +284,7 @@ From the repository root on macOS:
 
 ```sh
 bash scripts/check-swift.sh
+bash scripts/check-artwork.sh
 xcodebuild -project Recycli.xcodeproj -scheme Recycli -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build
 ```
 

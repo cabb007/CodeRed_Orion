@@ -153,7 +153,7 @@ struct ShopView: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 14) {
-                        Image(habitat.cleanAsset).resizable().interpolation(.none).scaledToFill()
+                        HabitatArtwork(asset: habitat.cleanAsset).scaledToFill()
                             .frame(width: 80, height: 100).clipped().clipShape(PixelFrame())
                             .overlay { PixelSprite(sprite: GameSprite(rawValue: habitat.starterID) ?? .pip, size: 46).offset(y: 15) }
                         VStack(alignment: .leading, spacing: 6) {
