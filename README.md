@@ -14,12 +14,12 @@ The `prototype-2` integration combines main at `a3f557c` with prototype at `aa65
 
 | Device | React Native / Expo (`mobile/`) | Swift / SwiftUI (`Recycli/`) |
 | --- | --- | --- |
-| iPhone | Expo Go compatible with SDK 57, or a signed iOS build | iOS 17+; install using a Mac and Xcode 16+ |
+| iPhone | Expo Go compatible with SDK 57, or a signed iOS build | iOS 17+; Xcode on Mac or xtool on Windows/WSL |
 | Android | Expo Go or an Android build | Not supported |
 | Browser | Development preview; native maps/camera/sharing differ | Not supported |
-| Development computer | Windows, macOS or Linux can serve Expo to either phone | macOS/Xcode required for local iOS builds |
+| Development computer | Windows, macOS or Linux can serve Expo to either phone | macOS/Xcode, or Windows/WSL with xtool for physical iPhone builds |
 
-These are separate implementations with separate local saves. Expo Go opens the React Native app; use Xcode to install Swift. The Expo app uses React 19.2.3, React Native 0.86.3 and Expo SDK 57, with AsyncStorage, SecureStore, Expo Camera/Audio/Haptics/Location and react-native-maps. Swift uses SwiftUI, Combine, AVFoundation, MapKit/Core Location, UserDefaults and Keychain. Both can use the optional Node.js/SQLite server. **Swift also supports a personal Gemini key directly on the iPhone; React Native AI review uses the server.** See the [stack and device setup guide](mobile/README.md).
+These are separate implementations with separate local saves. Expo Go opens the React Native app; use Xcode or xtool to install Swift. The Expo app uses React 19.2.3, React Native 0.86.3 and Expo SDK 57, with AsyncStorage, SecureStore, Expo Camera/Audio/Haptics/Location and react-native-maps. Swift uses SwiftUI, Combine, AVFoundation, MapKit/Core Location, UserDefaults and Keychain. Both can use the optional Node.js/SQLite server. **Swift also supports a personal Gemini key directly on the iPhone; React Native AI review uses the server.** See the [stack and device setup guide](mobile/README.md).
 
 ## What you can do
 
@@ -69,6 +69,16 @@ The portable launcher signs into Expo if needed and starts an Expo Go tunnel on 
 On macOS/Linux, from `mobile/`, run `npm ci`, `npx expo login`, then `npm run iphone`. For **Android**, install the same dependencies, run `npx expo start --go`, and scan with Expo Go on the same Wi-Fi; use `--tunnel` if LAN access fails. For a browser preview, use `npm run web`. Native Android builds need a Maps SDK key; follow [mobile setup](mobile/README.md#native-configuration).
 
 If Expo says its module is missing, run `npm.cmd ci` inside `mobile/` before starting it. Accepting an npx download prompt installs only a temporary CLI. There is no root `package.json`. For a timeout or blank screen, stop the old server with **Ctrl+C**, run the launcher, and scan its new tunnel QR code. Use `npx`, not `nxp`; browser preview uses `expo start --web`, not `expo --browser`. Detailed [iPhone troubleshooting](mobile/README.md#iphone-request-timeout-or-blank-screen) explains what output to collect if it still fails.
+
+### Swift: iPhone from Windows with xtool
+
+Follow the [xtool Windows guide](docs/XTOOL_WINDOWS.md) to use the existing Swift app on a physical iPhone. Once Swift, xtool, the Darwin SDK and your device connection are configured, run from the repository root in Ubuntu:
+
+```bash
+bash scripts/run-xtool.sh
+```
+
+The wrapper prepares the original artwork, sounds, Gemini configuration and iPhone permissions, then builds and installs the app. React Native remains separate.
 
 ### Swift: iPhone from a Mac
 
@@ -287,6 +297,6 @@ npm run export:all
 
 From `server/`, run `npm test` with Node.js 22.13+ (CI uses Node 24). On Windows, use `npm.cmd` in place of `npm` if PowerShell blocks the npm script.
 
-Checks cover persistence, preview isolation, pet collisions, capture ordering, two-photo server/client compatibility, reward receipts, duplicate prevention, background review, community landmarks and request limits. Mocked tests use no Gemini key and do not establish recognition accuracy. GitHub Actions runs Swift checks plus an iOS Simulator build, and React Native tests/lint plus iOS/Android/web exports and server tests.
+Checks cover persistence, preview isolation, pet collisions, capture ordering, two-photo server/client compatibility, reward receipts, duplicate prevention, background review, community landmarks and request limits. Mocked tests use no Gemini key and do not establish recognition accuracy. GitHub Actions runs Swift checks, an Xcode iOS Simulator build, xtool resource checks and an iOS Simulator build of the Swift package, and React Native tests/lint plus iOS/Android/web exports and server tests.
 
 Before presenting, test camera/location permissions, maps, four-pet gestures, feeding, sound/haptics, Reduce Motion and small-screen layouts on physical devices. Test Actual mode with a valid key and real photos, including unclear results and network failure. Confirm rewards apply once with the actual added amount and updated total, and preview restores saved gameplay and preferences.

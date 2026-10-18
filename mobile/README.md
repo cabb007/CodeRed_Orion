@@ -22,12 +22,12 @@ React Native uses the optional Node.js server in `server/`, with built-in SQLite
 
 | Phone or preview | React Native / Expo (`mobile/`) | Swift / SwiftUI (`Recycli/`) |
 | --- | --- | --- |
-| iPhone | Supported through a compatible Expo Go app or a signed native build | Supported on iOS 17+; install using macOS and Xcode |
+| iPhone | Supported through a compatible Expo Go app or a signed native build | Supported on iOS 17+; Xcode on Mac or xtool on Windows/WSL |
 | Android phone | Supported through a compatible Expo Go app or an Android build | Not supported; use the React Native app |
 | Browser | Development preview with a location list; some native phone features differ or are unavailable | No browser app |
 | Simulator/emulator | Requires the relevant platform tools; iOS Simulator requires macOS | iPhone Simulator on macOS/Xcode; camera capture requires a physical iPhone |
 
-Windows can run the React Native development server for **both iPhone and Android**. Swift is the native **iPhone-only implementation** in this repository; it cannot be installed on Android or built locally from Windows. Use macOS/Xcode for Swift. The two implementations keep separate local saves.
+Windows can run the React Native development server for **both iPhone and Android**. Swift is the native **iPhone-only implementation** in this repository; it cannot be installed on Android. Build Swift using macOS/Xcode or [xtool on Windows/WSL](../docs/XTOOL_WINDOWS.md). The two implementations keep separate local saves.
 
 ## Set up React Native on an iPhone
 
@@ -73,6 +73,8 @@ If the terminal finishes bundling for iOS but the phone still shows a blank scre
 Expo Go supplies the development map modules. A standalone Android build needs a Maps SDK for Android key through `GOOGLE_MAPS_ANDROID_API_KEY`, with the correct package/signing restrictions, plus Android build/signing configuration. See [native configuration](#native-configuration). The Swift app cannot be used on this phone.
 
 ## Set up Swift on an iPhone
+
+For Windows, follow the [xtool guide](../docs/XTOOL_WINDOWS.md). The steps below use Xcode on a Mac.
 
 1. Use a Mac with Xcode 16 or newer. Check out `prototype-2` and open `Recycli.xcodeproj` from the repository root. Swift setup does not use npm, Expo Go or the `mobile/` folder.
 2. Select the **Recycli** scheme. Connect your iPhone to the Mac, unlock it and trust the computer when prompted.

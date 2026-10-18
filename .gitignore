@@ -11,3 +11,9 @@ server/data/
 node_modules/
 .expo/
 mobile/dist/
+.build/
+.swiftpm/
+.xtool-resources/
+.bsp/xtool.json
+xtool/
+__pycache__/

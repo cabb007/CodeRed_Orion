@@ -33,3 +33,7 @@ Run `bash scripts/check-swift.sh` on macOS. It includes state/store/save compati
 The Swift checks workflow builds the iOS app for a generic Simulator after these checks. React Native has cross-stack contract checks against the actual two-photo server policy, alongside its gameplay tests. Simulator compilation does not validate physical camera, permission prompts, gestures, map placement, audio, haptics or live sharing.
 
 On a physical iPhone, check all three habitats and pollution faces, four-resident roaming/drop collisions, food/layout persistence, background interruptions, developer preview entry/exit and relaunch isolation, post-scan totals, local landmarks across relaunch, and community share/photo/remove with a test server. Sharing should never change leaves or progress. Check Silent Mode and Reduce Motion.
+
+## Windows Swift development
+
+[xtool setup and usage](docs/XTOOL_WINDOWS.md) builds the same Recycli sources through Package.swift and xtool.yml. The runner stages original artwork, sounds, Gemini JSON and iPhone permissions. SwiftUI previews and the iPhone Simulator still use macOS/Xcode. The Expo app remains separate.
