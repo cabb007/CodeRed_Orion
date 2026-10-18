@@ -11,7 +11,12 @@ let package = Package(
             name: "Recycli",
             path: "Recycli",
             exclude: ["Assets.xcassets", "Info.plist", "Resources", "Sounds"],
-            sources: ["RecycliApp.swift", "Models", "Views"]
+            sources: ["RecycliApp.swift", "Models", "Views"],
+            swiftSettings: [
+                // Xcode enables overlays by default; Linux SwiftBuild toolsets may not.
+                // MapKit + SwiftUI needs this to expose MapCameraPosition, MapReader, etc.
+                .unsafeFlags(["-Xfrontend", "-enable-cross-import-overlays"]),
+            ]
         ),
     ],
     swiftLanguageModes: [.v5]
