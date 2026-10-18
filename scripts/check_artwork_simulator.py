@@ -5,14 +5,15 @@ import plistlib
 import shutil
 import subprocess
 import tempfile
+import uuid
 
 
-def run(*args, timeout=120, capture=False):
+def run(*args, timeout=120, capture=False, combine=False):
     print("Running:", " ".join(str(arg) for arg in args), flush=True)
     try:
         result = subprocess.run(args, check=False, timeout=timeout, text=True,
                                 stdout=subprocess.PIPE if capture else None,
-                                stderr=subprocess.STDOUT if capture else None)
+                                stderr=subprocess.STDOUT if combine else None)
     except subprocess.TimeoutExpired as error:
         if error.stdout:
             print(error.stdout.decode(errors="replace") if isinstance(error.stdout, bytes) else error.stdout, flush=True)
@@ -62,11 +63,12 @@ def main():
             run("codesign", "--force", "--sign", "-", str(app))
             device = run("xcrun", "simctl", "create", "Recycli Artwork Checks",
                          "com.apple.CoreSimulator.SimDeviceType.iPhone-16", capture=True).stdout.strip()
+            device = str(uuid.UUID(device))
             run("xcrun", "simctl", "boot", device)
             run("xcrun", "simctl", "bootstatus", device, "-b", timeout=180)
             run("xcrun", "simctl", "install", device, str(app))
             result = run("xcrun", "simctl", "launch", "--console", device, identifier,
-                         capture=True, timeout=90)
+                         capture=True, combine=True, timeout=90)
             print(result.stdout, flush=True)
             if "Artwork runtime checks passed:" not in result.stdout:
                 raise RuntimeError("Artwork app did not report successful UIKit checks")
